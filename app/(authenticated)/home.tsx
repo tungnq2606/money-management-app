@@ -20,7 +20,7 @@ interface QuickStats {
 
 export default function HomeScreen() {
   const { user, signOut } = useAuthStore();
-  const [stats, setStats] = useState<QuickStats>({
+  const [stats] = useState<QuickStats>({
     totalBalance: 1250.75,
     monthlyIncome: 3500.0,
     monthlyExpenses: 2100.25,

@@ -61,11 +61,11 @@ A modern React Native mobile application for personal finance management, built 
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/[your-username]/money-management-app.git
+   git clone https://github.com/tungnq2606/money-management-app.git
    cd money-management-app
    ```
 
-2. Install dependencies2. Install dependencies:
+2. Install dependencies:
    ```bash
    npm install
    ```
@@ -93,13 +93,19 @@ money-management/
 │   │   └── profile.tsx     # User profile
 │   ├── signin.tsx          # Login screen
 │   ├── signup.tsx          # Registration screen
+│   ├── +not-found.tsx      # 404 error page
 │   └── _layout.tsx         # Root layout with auth logic
 ├── stores/
 │   └── authStore.ts        # Zustand authentication store
 ├── database/
 │   ├── schemas.ts          # Realm database schemas
 │   └── databaseService.ts  # Database operations
-└── components/             # Reusable UI components
+├── assets/
+│   ├── docs/               # App screenshots
+│   ├── fonts/              # Custom fonts
+│   └── images/             # App icons and images
+├── constants/              # App constants and configuration
+└── hooks/                  # Custom React hooks
 ```
 
 ## 🔐 Security Features
