@@ -2,6 +2,14 @@
 
 A modern React Native mobile application for personal finance management, built with Expo and TypeScript.
 
+## 📱 Screenshots
+
+<div align="center">
+  <img src="assets/docs/SignIn.png" alt="Sign In Screen" width="250" />
+  <img src="assets/docs/SignUp.png" alt="Sign Up Screen" width="250" />
+  <img src="assets/docs/Home.png" alt="Home Dashboard" width="250" />
+</div>
+
 ## 🚀 Features
 
 - **Secure Authentication**: User registration and login with encrypted password storage
