@@ -1,50 +1,132 @@
-# Welcome to your Expo app 👋
+# Money Management App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A modern React Native mobile application for personal finance management, built with Expo and TypeScript.
 
-## Get started
+## 🚀 Features
 
-1. Install dependencies
+- **Secure Authentication**: User registration and login with encrypted password storage
+- **Dashboard Overview**: Financial summary with balance, income, and expense tracking
+- **Account Management**: Support for multiple bank accounts and wallets
+- **Transaction Tracking**: Record and categorize income and expenses
+- **Budget Planning**: Set spending limits and track budget progress
+- **Data Persistence**: Local database storage with Realm
+- **Modern UI**: Clean, intuitive interface with responsive design
 
+## 🛠️ Tech Stack
+
+- **Frontend**: React Native with Expo
+- **Language**: TypeScript
+- **State Management**: Zustand
+- **Database**: Realm (local storage)
+- **Security**: Expo SecureStore & Expo Crypto
+- **Navigation**: Expo Router
+- **Styling**: React Native StyleSheet
+
+## 📱 Architecture
+
+### Authentication Flow
+- Protected routes with automatic redirection
+- Secure credential storage using device keychain
+- Session management with persistent login state
+
+### Database Schema
+- **Users**: Profile and account information
+- **Accounts**: Bank accounts, credit cards, wallets
+- **Categories**: Income and expense categorization
+- **Transactions**: Financial transaction records
+- **Budgets**: Spending limits and tracking
+
+### State Management
+- Centralized auth state with Zustand
+- Reactive UI updates based on authentication status
+- Clean separation of concerns
+
+## 🚦 Getting Started
+
+### Prerequisites
+- Node.js (v16 or higher)
+- npm or yarn
+- Expo CLI
+- iOS Simulator or Android Emulator (or Expo Go app)
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/[your-username]/money-management-app.git
+   cd money-management-app
+   ```
+
+2. Install dependencies2. Install dependencies:
    ```bash
    npm install
    ```
 
-2. Start the app
-
+3. Start the development server:
    ```bash
-   npx expo start
+   npm start
    ```
 
-In the output, you'll find options to open the app in a
+4. Run on your preferred platform:
+   - Press `i` for iOS simulator
+   - Press `a` for Android emulator
+   - Scan QR code with Expo Go app on your device
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## 📁 Project Structure
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+money-management/
+├── app/
+│   ├── (authenticated)/     # Protected routes
+│   │   ├── home.tsx        # Dashboard screen
+│   │   ├── accounts.tsx    # Account management
+│   │   ├── transactions.tsx # Transaction history
+│   │   ├── budgets.tsx     # Budget planning
+│   │   └── profile.tsx     # User profile
+│   ├── signin.tsx          # Login screen
+│   ├── signup.tsx          # Registration screen
+│   └── _layout.tsx         # Root layout with auth logic
+├── stores/
+│   └── authStore.ts        # Zustand authentication store
+├── database/
+│   ├── schemas.ts          # Realm database schemas
+│   └── databaseService.ts  # Database operations
+└── components/             # Reusable UI components
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## 🔐 Security Features
 
-## Learn more
+- **Password Hashing**: SHA-256 encryption for user passwords
+- **Secure Storage**: Device keychain integration via Expo SecureStore
+- **Session Management**: Encrypted tokens with automatic expiration
+- **Data Validation**: Input sanitization and validation
 
-To learn more about developing your project with Expo, look at the following resources:
+## 🎯 Roadmap
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- [ ] Transaction import from bank APIs
+- [ ] Advanced budget analytics and insights
+- [ ] Bill reminder notifications
+- [ ] Expense categorization with AI
+- [ ] Data export functionality
+- [ ] Multi-currency support
+- [ ] Cloud backup and sync
 
-## Join the community
+## 🤝 Contributing
 
-Join our community of developers creating universal apps.
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## 📄 License
+
+This project is licensed under the MIT License.
+
+## 👨‍💻 Developer
+
+Built with ❤️ for personal finance management.
+
+---
+
+**Note**: This app stores data locally on your device. Always backup important financial data regularly.
