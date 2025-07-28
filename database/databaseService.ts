@@ -200,7 +200,7 @@ class DatabaseService {
   getUserTransactions(
     userId: string,
     limit?: number
-  ): Realm.Results<Transaction> {
+  ): Realm.Results<Transaction> | Transaction[] {
     const realm = this.ensureRealm();
     const transactions = realm
       .objects<Transaction>("Transaction")
@@ -213,7 +213,7 @@ class DatabaseService {
   getAccountTransactions(
     accountId: string,
     limit?: number
-  ): Realm.Results<Transaction> {
+  ): Realm.Results<Transaction> | Transaction[] {
     const realm = this.ensureRealm();
     const transactions = realm
       .objects<Transaction>("Transaction")
