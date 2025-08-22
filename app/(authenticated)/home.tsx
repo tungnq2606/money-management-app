@@ -1,6 +1,10 @@
+import { databaseService } from "@/database/databaseService";
+import { useAccountStore } from "@/stores/accountStore";
 import { useAuthStore } from "@/stores/authStore";
+import { useCategoryStore } from "@/stores/categoryStore";
+import { useTransactionStore } from "@/stores/transactionStore";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   RefreshControl,
   ScrollView,
@@ -20,20 +24,80 @@ interface QuickStats {
 
 export default function HomeScreen() {
   const { user, signOut } = useAuthStore();
-  const [stats] = useState<QuickStats>({
-    totalBalance: 1250.75,
-    monthlyIncome: 3500.0,
-    monthlyExpenses: 2100.25,
-    accountsCount: 3,
+  const { accounts, fetchAccounts } = useAccountStore();
+  const { transactions, fetchTransactions } = useTransactionStore();
+  const { fetchCategories } = useCategoryStore();
+
+  const [stats, setStats] = useState<QuickStats>({
+    totalBalance: 0,
+    monthlyIncome: 0,
+    monthlyExpenses: 0,
+    accountsCount: 0,
   });
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  const loadData = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      // Load all data concurrently
+      await Promise.all([
+        fetchAccounts(user.id),
+        fetchTransactions(user.id, 100), // Load last 100 transactions
+        fetchCategories(user.id),
+      ]);
+    } catch (error) {
+      console.error("Error loading data:", error);
+    }
+  }, [user, fetchAccounts, fetchTransactions, fetchCategories]);
+
+  const updateStats = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const totalBalance = databaseService.getTotalBalance(user.id);
+      const currentDate = new Date();
+      const currentMonth = currentDate.getMonth() + 1;
+      const currentYear = currentDate.getFullYear();
+
+      const monthlyIncome = databaseService.getMonthlyIncome(
+        user.id,
+        currentMonth,
+        currentYear
+      );
+      const monthlyExpenses = databaseService.getMonthlyExpenses(
+        user.id,
+        currentMonth,
+        currentYear
+      );
+
+      setStats({
+        totalBalance,
+        monthlyIncome,
+        monthlyExpenses,
+        accountsCount: accounts.length,
+      });
+    } catch (error) {
+      console.error("Error updating stats:", error);
+    }
+  }, [user, accounts.length]);
+
+  useEffect(() => {
+    if (user) {
+      loadData();
+    }
+  }, [user, loadData]);
+
+  useEffect(() => {
+    if (user && accounts.length >= 0) {
+      updateStats();
+    }
+  }, [accounts.length, transactions.length, user, updateStats]);
+
   const onRefresh = async () => {
     setIsRefreshing(true);
-    // Simulate loading
-    setTimeout(() => {
-      setIsRefreshing(false);
-    }, 1000);
+    await loadData();
+    setIsRefreshing(false);
   };
 
   const handleSignOut = async () => {

@@ -15,6 +15,8 @@ class DatabaseService {
     try {
       this.realm = await Realm.open(realmConfig);
       console.log("Realm database initialized successfully");
+      // Log the location of the Realm file
+      console.log(`Realm file location: ${this.realm.path}`);
     } catch (error) {
       console.error("Failed to initialize Realm database:", error);
       throw error;
@@ -55,7 +57,9 @@ class DatabaseService {
 
   getUserByEmail(email: string): User | null {
     const realm = this.ensureRealm();
-    return realm.objectForPrimaryKey<User>("User", email) || null;
+    return (
+      realm.objects<User>("User").filtered("email == $0", email)[0] || null
+    );
   }
 
   // Account operations

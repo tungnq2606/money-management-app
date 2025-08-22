@@ -1,3 +1,5 @@
+import { databaseService } from "@/database/databaseService";
+import { initializeUserData } from "@/database/seedData";
 import * as Crypto from "expo-crypto";
 import * as SecureStore from "expo-secure-store";
 import { create } from "zustand";
@@ -38,21 +40,35 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       set({ isLoading: true });
 
-      // In a real app, you would call your authentication API here
-      // For now, we'll simulate with stored credentials
+      // Check if user exists in Realm database
+      const realmUser = databaseService.getUserByEmail(email);
+      if (!realmUser) {
+        set({ isLoading: false });
+        return false; // User doesn't exist
+      }
+
+      // Check stored password hash
       const sanitizedEmail = sanitizeEmailForKey(email);
       const storedCredentials = await SecureStore.getItemAsync(
         `credentials_${sanitizedEmail}`
       );
 
       if (storedCredentials) {
-        const { hashedPassword, userData } = JSON.parse(storedCredentials);
+        const { hashedPassword } = JSON.parse(storedCredentials);
         const inputPasswordHash = await Crypto.digestStringAsync(
           Crypto.CryptoDigestAlgorithm.SHA256,
           password
         );
 
         if (hashedPassword === inputPasswordHash) {
+          // Create user data for auth store
+          const userData: User = {
+            id: realmUser._id.toString(),
+            email: realmUser.email,
+            name: realmUser.name,
+            createdAt: realmUser.createdAt,
+          };
+
           // Generate a session token
           const token = await Crypto.digestStringAsync(
             Crypto.CryptoDigestAlgorithm.SHA256,
@@ -87,12 +103,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       set({ isLoading: true });
 
-      // Check if user already exists
-      const sanitizedEmail = sanitizeEmailForKey(email);
-      const existingCredentials = await SecureStore.getItemAsync(
-        `credentials_${sanitizedEmail}`
-      );
-      if (existingCredentials) {
+      // Check if user already exists in Realm database
+      const existingUser = databaseService.getUserByEmail(email);
+      if (existingUser) {
         set({ isLoading: false });
         return false; // User already exists
       }
@@ -103,21 +116,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         password
       );
 
-      // Create user data
+      // Create user in Realm database
+      const realmUser = databaseService.createUser(email, name);
+
+      // Create user data for auth store
       const userData: User = {
-        id: await Crypto.digestStringAsync(
-          Crypto.CryptoDigestAlgorithm.SHA256,
-          email
-        ),
-        email,
-        name,
-        createdAt: new Date(),
+        id: realmUser._id.toString(),
+        email: realmUser.email,
+        name: realmUser.name,
+        createdAt: realmUser.createdAt,
       };
 
-      // Store credentials and user data
+      // Store password hash securely (for authentication)
+      const sanitizedEmail = sanitizeEmailForKey(email);
       const credentialsData = {
         hashedPassword,
-        userData,
+        userId: realmUser._id.toString(),
       };
 
       await SecureStore.setItemAsync(
@@ -133,6 +147,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       await SecureStore.setItemAsync(AUTH_TOKEN_KEY, token);
       await SecureStore.setItemAsync(USER_DATA_KEY, JSON.stringify(userData));
+
+      // Initialize default data for new user
+      await initializeUserData(realmUser._id.toString(), realmUser.name);
 
       set({
         user: userData,

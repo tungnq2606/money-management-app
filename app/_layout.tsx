@@ -11,6 +11,7 @@ import { StyleSheet, Text, View } from "react-native";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { DatabaseProvider } from "@/providers/DatabaseProvider";
 import { useAuthStore } from "@/stores/authStore";
 
 function LoadingScreen() {
@@ -77,10 +78,12 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <AuthNavigator />
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <DatabaseProvider>
+      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+        <AuthNavigator />
+        <StatusBar style="auto" />
+      </ThemeProvider>
+    </DatabaseProvider>
   );
 }
 
