@@ -10,11 +10,7 @@ async function openRealm(): Promise<Realm> {
   return Realm.open(realmConfig);
 }
 
-function uid(prefix: string): string {
-  return `${prefix}_${Math.random().toString(36).slice(2, 10)}_${Date.now()}`;
-}
-
-async function resetAll(): Promise<void> {
+export async function resetAll(): Promise<void> {
   const realm = await openRealm();
   realm.write(() => {
     for (const schema of realm.schema) {
@@ -26,15 +22,15 @@ async function resetAll(): Promise<void> {
   realm.close();
 }
 
-async function seedInitialData(): Promise<void> {
+export async function seedInitialData(): Promise<void> {
   const realm = await openRealm();
   const now = new Date();
 
   realm.write(() => {
     // User
-    const userId = uid("user");
+    const userId = new Realm.BSON.ObjectId();
     realm.create("User", {
-      id: userId,
+      _id: userId,
       name: "Demo User",
       birthday: new Date(1995, 5, 15),
       phoneNumber: 84999999999,
@@ -46,48 +42,48 @@ async function seedInitialData(): Promise<void> {
     });
 
     // Wallet
-    const walletId = uid("wallet");
+    const walletId = new Realm.BSON.ObjectId();
     realm.create("Wallet", {
-      id: walletId,
-      userId,
+      _id: walletId,
+      userId: userId.toHexString(),
       name: "Main Wallet",
       type: "cash",
       amount: 1000,
       toDate: now,
       fromDate: now,
       createdAt: now,
-      updateAt: now,
+      updatedAt: now,
     });
 
     // Categories
-    const incomeCategoryId = uid("cat");
-    const expenseCategoryId = uid("cat");
+    const incomeCategoryId = new Realm.BSON.ObjectId();
+    const expenseCategoryId = new Realm.BSON.ObjectId();
     realm.create("Category", {
-      id: incomeCategoryId,
+      _id: incomeCategoryId,
       name: "Salary",
-      userId,
+      userId: userId.toHexString(),
       parentId: "",
       type: "income",
       createdAt: now,
-      updateAt: now,
+      updatedAt: now,
     });
     realm.create("Category", {
-      id: expenseCategoryId,
+      _id: expenseCategoryId,
       name: "Food & Dining",
-      userId,
+      userId: userId.toHexString(),
       parentId: "",
       type: "expense",
       createdAt: now,
-      updateAt: now,
+      updatedAt: now,
     });
 
     // Budget
-    const budgetId = uid("budget");
+    const budgetId = new Realm.BSON.ObjectId();
     realm.create("Budget", {
-      id: budgetId,
+      _id: budgetId,
       name: "Monthly Food",
-      walletId: [walletId],
-      categoryId: expenseCategoryId,
+      walletId: [walletId.toHexString()],
+      categoryId: expenseCategoryId.toHexString(),
       amount: 300,
       remain: 300,
       loop: true,
@@ -95,16 +91,16 @@ async function seedInitialData(): Promise<void> {
       fromDate: new Date(now.getFullYear(), now.getMonth(), 1),
       note: "Initial monthly food budget",
       createdAt: now,
-      updateAt: now,
+      updatedAt: now,
     });
 
     // Transactions
-    const txIncomeId = uid("tx");
-    const txExpenseId = uid("tx");
+    const txIncomeId = new Realm.BSON.ObjectId();
+    const txExpenseId = new Realm.BSON.ObjectId();
     realm.create("Transaction", {
-      id: txIncomeId,
-      walletId,
-      categoryId: incomeCategoryId,
+      _id: txIncomeId,
+      walletId: walletId.toHexString(),
+      categoryId: incomeCategoryId.toHexString(),
       amount: 2000,
       type: "income",
       note: "Salary",
@@ -112,9 +108,9 @@ async function seedInitialData(): Promise<void> {
       updatedAt: now,
     });
     realm.create("Transaction", {
-      id: txExpenseId,
-      walletId,
-      categoryId: expenseCategoryId,
+      _id: txExpenseId,
+      walletId: walletId.toHexString(),
+      categoryId: expenseCategoryId.toHexString(),
       amount: 25.5,
       type: "expense",
       note: "Lunch",
@@ -138,20 +134,3 @@ async function seedInitialData(): Promise<void> {
   realm.close();
 }
 
-async function main() {
-  const cmd = process.argv[2] || "init";
-  if (cmd === "reset") {
-    await resetAll();
-    return;
-  }
-  if (cmd === "init") {
-    await seedInitialData();
-    return;
-  }
-  console.log("Unknown command. Use: init | reset");
-}
-
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});

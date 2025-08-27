@@ -10,8 +10,10 @@ import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import "react-native-reanimated";
 
+import { databaseService } from "@/database/databaseService";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { DatabaseProvider } from "@/providers/DatabaseProvider";
+import { seedInitialData } from "@/scripts/seed";
 import { useAuthStore } from "@/stores/authStore";
 
 function LoadingScreen() {
@@ -32,6 +34,13 @@ function AuthNavigator() {
       try {
         // Check authentication status
         await checkAuthStatus();
+
+        // Check if database is empty and seed initial data if needed
+        if (databaseService.isDatabaseEmpty()) {
+          console.log("Database is empty, seeding initial data...");
+          await seedInitialData();
+          console.log("Initial data seeded successfully");
+        }
 
         setIsInitialized(true);
       } catch (error) {

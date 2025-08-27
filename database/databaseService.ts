@@ -297,6 +297,13 @@ class DatabaseService {
 
     return income.sum("amount") as number;
   }
+
+  // Check if database is empty (no users exist)
+  isDatabaseEmpty(): boolean {
+    const realm = this.ensureRealm();
+    const users = realm.objects<User>("User");
+    return users.length === 0;
+  }
 }
 
 export const databaseService = new DatabaseService();
