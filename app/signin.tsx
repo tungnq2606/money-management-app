@@ -35,7 +35,7 @@ export default function SignInScreen() {
     setIsLoading(false);
 
     if (success) {
-      router.replace("/(authenticated)/home");
+      router.replace("/(tabs)/home");
     } else {
       Alert.alert("Error", "Invalid email or password");
     }

@@ -1,12 +1,5 @@
 import Realm from "realm";
-import {
-  Account,
-  Budget,
-  Category,
-  realmConfig,
-  Transaction,
-  User,
-} from "./schemas";
+import { Budget, Category, realmConfig, Transaction, User } from "./schemas";
 
 class DatabaseService {
   private realm: Realm | null = null;

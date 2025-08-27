@@ -33,11 +33,13 @@ A modern React Native mobile application for personal finance management, built 
 ## 📱 Architecture
 
 ### Authentication Flow
+
 - Protected routes with automatic redirection
 - Secure credential storage using device keychain
 - Session management with persistent login state
 
 ### Database Schema
+
 - **Users**: Profile and account information
 - **Accounts**: Bank accounts, credit cards, wallets
 - **Categories**: Income and expense categorization
@@ -45,6 +47,7 @@ A modern React Native mobile application for personal finance management, built 
 - **Budgets**: Spending limits and tracking
 
 ### State Management
+
 - Centralized auth state with Zustand
 - Reactive UI updates based on authentication status
 - Clean separation of concerns
@@ -52,6 +55,7 @@ A modern React Native mobile application for personal finance management, built 
 ## 🚦 Getting Started
 
 ### Prerequisites
+
 - Node.js (v16 or higher)
 - npm or yarn
 - Expo CLI
@@ -60,12 +64,14 @@ A modern React Native mobile application for personal finance management, built 
 ### Installation
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/tungnq2606/money-management-app.git
    cd money-management-app
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    ```
@@ -74,6 +80,51 @@ A modern React Native mobile application for personal finance management, built 
    ```bash
    npm start
    ```
+
+## 🧩 Database: Schemas Overview
+
+This app uses Realm for local persistence. Current models:
+
+- User: `id`, `name`, `birthday`, `phoneNumber`, `address`, `email`, `password`, `createdAt`, `updatedAt`
+- Wallet: `id`, `userId`, `name`, `type`, `amount`, `toDate`, `fromDate`, `createdAt`, `updateAt`
+- Category: `id`, `name`, `userId`, `parentId`, `type (income|expense)`, `createdAt`, `updateAt`
+- Transaction: `id`, `walletId`, `categoryId`, `amount`, `type (income|expense)`, `note`, `createdAt`, `updatedAt`
+- Budget: `id`, `name`, `walletId[]`, `categoryId`, `amount`, `remain`, `loop`, `toDate`, `fromDate`, `note`, `createdAt`, `updateAt`
+- Notification: `_id (objectId)`, `content`, `link`, `time`, `isRead`, `createdAt`, `updatedAt`
+
+## 🌱 Seed / Initialize Data
+
+We provide simple scripts to seed or reset local Realm data using the above schemas.
+
+### 1) Install tooling (first time only)
+
+```bash
+npm i -D tsx
+```
+
+### 2) Initialize sample data
+
+```bash
+npm run seed:init
+```
+
+This creates:
+
+- One demo user and a wallet
+- A couple of categories (income + expense)
+- One budget referencing the wallet/category
+- Two transactions (one income, one expense)
+- One welcome notification
+
+### 3) Reset all local Realm data (dangerous)
+
+```bash
+npm run seed:reset
+```
+
+### 4) Custom seeding
+
+You can edit `scripts/seed.ts` to tailor initial data for development.
 
 4. Run on your preferred platform:
    - Press `i` for iOS simulator

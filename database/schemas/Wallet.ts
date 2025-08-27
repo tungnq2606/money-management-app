@@ -1,24 +1,28 @@
 import Realm from "realm";
 
-// Category Schema
-export class Category extends Realm.Object<Category> {
+// Wallet Schema
+export class Wallet extends Realm.Object<Wallet> {
   _id!: Realm.BSON.ObjectId;
-  name!: string;
   userId!: string;
-  parentId!: string;
-  type!: "income" | "expense";
+  name!: string;
+  type!: string;
+  amount!: number;
+  toDate!: Date;
+  fromDate!: Date;
   createdAt!: Date;
   updatedAt!: Date;
 
   static schema = {
-    name: "Category",
+    name: "Wallet",
     primaryKey: "_id",
     properties: {
       _id: "objectId",
-      name: "string",
       userId: "string",
-      parentId: "string",
+      name: "string",
       type: "string",
+      amount: "double",
+      toDate: "date",
+      fromDate: "date",
       createdAt: "date",
       updatedAt: "date",
     },

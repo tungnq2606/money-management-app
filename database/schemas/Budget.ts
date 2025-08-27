@@ -3,14 +3,15 @@ import Realm from "realm";
 // Budget Schema
 export class Budget extends Realm.Object<Budget> {
   _id!: Realm.BSON.ObjectId;
-  userId!: string;
+  name!: string;
+  walletId!: string[];
   categoryId!: string;
   amount!: number;
-  spent!: number;
-  period!: string; // 'monthly', 'weekly', 'yearly'
-  startDate!: Date;
-  endDate!: Date;
-  isActive!: boolean;
+  remain!: number;
+  loop!: boolean;
+  toDate!: Date;
+  fromDate!: Date;
+  note!: string;
   createdAt!: Date;
   updatedAt!: Date;
 
@@ -19,14 +20,15 @@ export class Budget extends Realm.Object<Budget> {
     primaryKey: "_id",
     properties: {
       _id: "objectId",
-      userId: "string",
+      name: "string",
+      walletId: "string[]",
       categoryId: "string",
       amount: "double",
-      spent: { type: "double" as const, default: 0 },
-      period: "string",
-      startDate: "date",
-      endDate: "date",
-      isActive: { type: "bool" as const, default: true },
+      remain: { type: "double" as const, default: 0 },
+      loop: { type: "bool" as const, default: false },
+      toDate: "date",
+      fromDate: "date",
+      note: { type: "string" as const, default: "" },
       createdAt: "date",
       updatedAt: "date",
     },
