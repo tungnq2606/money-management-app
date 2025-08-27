@@ -45,7 +45,8 @@ function AuthNavigator() {
   useEffect(() => {
     if (isInitialized && !isLoading) {
       if (isAuthenticated) {
-        router.replace("/(authenticated)/home");
+        // router.replace("/(authenticated)/home");
+        router.replace("/(tabs)/home");
       } else {
         router.replace("/signin");
       }
@@ -61,6 +62,7 @@ function AuthNavigator() {
       <Stack.Screen name="signin" />
       <Stack.Screen name="signup" />
       <Stack.Screen name="(authenticated)" />
+      <Stack.Screen name="(tabs)" />
       <Stack.Screen name="+not-found" />
     </Stack>
   );
