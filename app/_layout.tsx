@@ -1,118 +1,25 @@
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from "@react-navigation/native";
-import { useFonts } from "expo-font";
-import { Stack, router } from "expo-router";
-import { StatusBar } from "expo-status-bar";
-import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
-import "react-native-reanimated";
+import { Stack } from "expo-router";
+import React, { useEffect } from "react";
+import "react-native-get-random-values"; // Must be first import for BSON crypto polyfill
+import { DatabaseProvider } from "../providers/DatabaseProvider";
+import { useAuthStore } from "../stores/authStore";
 
-import { databaseService } from "@/database/databaseService";
-import { useColorScheme } from "@/hooks/useColorScheme";
-import { DatabaseProvider } from "@/providers/DatabaseProvider";
-import { seedInitialData } from "@/scripts/seed";
-import { useAuthStore } from "@/stores/authStore";
-
-function LoadingScreen() {
-  return (
-    <View style={styles.loadingContainer}>
-      <Text style={styles.loadingText}>Money Manager</Text>
-      <Text style={styles.loadingSubtext}>Loading...</Text>
-    </View>
-  );
-}
-
-function AuthNavigator() {
-  const { isAuthenticated, isLoading, checkAuthStatus } = useAuthStore();
-  const [isInitialized, setIsInitialized] = useState(false);
+export default function AuthNavigator() {
+  const { checkAuthStatus } = useAuthStore();
 
   useEffect(() => {
-    const initializeApp = async () => {
-      try {
-        // Check authentication status
-        await checkAuthStatus();
-
-        // Check if database is empty and seed initial data if needed
-        if (databaseService.isDatabaseEmpty()) {
-          console.log("Database is empty, seeding initial data...");
-          await seedInitialData();
-          console.log("Initial data seeded successfully");
-        }
-
-        setIsInitialized(true);
-      } catch (error) {
-        console.error("App initialization error:", error);
-        setIsInitialized(true);
-      }
-    };
-
-    initializeApp();
+    // Check authentication status when app loads
+    checkAuthStatus();
   }, [checkAuthStatus]);
-
-  useEffect(() => {
-    if (isInitialized && !isLoading) {
-      if (isAuthenticated) {
-        // router.replace("/(authenticated)/home");
-        router.replace("/(tabs)/home");
-      } else {
-        router.replace("/signin");
-      }
-    }
-  }, [isAuthenticated, isLoading, isInitialized]);
-
-  if (!isInitialized || isLoading) {
-    return <LoadingScreen />;
-  }
-
-  return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="signin" />
-      <Stack.Screen name="signup" />
-      <Stack.Screen name="(authenticated)" />
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="+not-found" />
-    </Stack>
-  );
-}
-
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
-  });
-
-  if (!loaded) {
-    return <LoadingScreen />;
-  }
 
   return (
     <DatabaseProvider>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <AuthNavigator />
-        <StatusBar style="auto" />
-      </ThemeProvider>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="signin" />
+        <Stack.Screen name="signup" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="+not-found" />
+      </Stack>
     </DatabaseProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#007AFF",
-  },
-  loadingText: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: "#fff",
-    marginBottom: 8,
-  },
-  loadingSubtext: {
-    fontSize: 16,
-    color: "#B3D9FF",
-  },
-});

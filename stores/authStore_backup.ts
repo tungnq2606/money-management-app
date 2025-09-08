@@ -3,7 +3,6 @@ import "react-native-get-random-values"; // Must be first import for BSON crypto
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { User } from "../database/schemas/User";
-import { userService } from "../database/services";
 
 // Custom storage implementation for Expo SecureStore
 const secureStorage = {

@@ -1,4 +1,3 @@
-import { useAuthStore } from "@/stores/authStore";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -12,12 +11,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useAuthStore } from "../stores/authStore";
 
 export default function SignInScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const { signIn } = useAuthStore();
+  const { signIn, isLoading, error, clearError } = useAuthStore();
 
   const handleSignIn = async () => {
     if (!email.trim() || !password.trim()) {
@@ -30,14 +29,13 @@ export default function SignInScreen() {
       return;
     }
 
-    setIsLoading(true);
     const success = await signIn(email.toLowerCase().trim(), password);
-    setIsLoading(false);
 
     if (success) {
       router.replace("/(tabs)/home");
-    } else {
-      Alert.alert("Error", "Invalid email or password");
+    } else if (error) {
+      Alert.alert("Error", error);
+      clearError();
     }
   };
 

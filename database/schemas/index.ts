@@ -1,3 +1,4 @@
+import "react-native-get-random-values"; // Must be first import for BSON crypto polyfill
 import Realm from "realm";
 import { Budget } from "./Budget";
 import { Category } from "./Category";
