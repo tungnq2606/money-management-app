@@ -4,17 +4,14 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { useFonts } from "expo-font";
-import { Stack, router } from "expo-router";
+import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import "react-native-reanimated";
 
-import { databaseService } from "@/database/databaseService";
+import { DatabaseProvider } from "@/components/DatabaseProvider";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { DatabaseProvider } from "@/providers/DatabaseProvider";
-import { seedInitialData } from "@/scripts/seed";
-import { useAuthStore } from "@/stores/authStore";
 
 function LoadingScreen() {
   return (
@@ -26,52 +23,11 @@ function LoadingScreen() {
 }
 
 function AuthNavigator() {
-  const { isAuthenticated, isLoading, checkAuthStatus } = useAuthStore();
-  const [isInitialized, setIsInitialized] = useState(false);
-
-  useEffect(() => {
-    const initializeApp = async () => {
-      try {
-        // Check authentication status
-        await checkAuthStatus();
-
-        // Check if database is empty and seed initial data if needed
-        if (databaseService.isDatabaseEmpty()) {
-          console.log("Database is empty, seeding initial data...");
-          await seedInitialData();
-          console.log("Initial data seeded successfully");
-        }
-
-        setIsInitialized(true);
-      } catch (error) {
-        console.error("App initialization error:", error);
-        setIsInitialized(true);
-      }
-    };
-
-    initializeApp();
-  }, [checkAuthStatus]);
-
-  useEffect(() => {
-    if (isInitialized && !isLoading) {
-      if (isAuthenticated) {
-        // router.replace("/(authenticated)/home");
-        router.replace("/(tabs)/home");
-      } else {
-        router.replace("/signin");
-      }
-    }
-  }, [isAuthenticated, isLoading, isInitialized]);
-
-  if (!isInitialized || isLoading) {
-    return <LoadingScreen />;
-  }
-
   return (
     <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />
       <Stack.Screen name="signin" />
       <Stack.Screen name="signup" />
-      <Stack.Screen name="(authenticated)" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="+not-found" />
     </Stack>

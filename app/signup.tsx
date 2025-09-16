@@ -1,4 +1,3 @@
-import { useAuthStore } from "@/stores/authStore";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -12,21 +11,27 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useAuthStore } from "../stores/authStore";
 
 export default function SignUpScreen() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const { signUp } = useAuthStore();
+  const [birthday, setBirthday] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [address, setAddress] = useState("");
+  const { signUp, isLoading, error, clearError } = useAuthStore();
 
   const handleSignUp = async () => {
     if (
       !name.trim() ||
       !email.trim() ||
       !password.trim() ||
-      !confirmPassword.trim()
+      !confirmPassword.trim() ||
+      !birthday.trim() ||
+      !phoneNumber.trim() ||
+      !address.trim()
     ) {
       Alert.alert("Error", "Please fill in all fields");
       return;
@@ -47,18 +52,34 @@ export default function SignUpScreen() {
       return;
     }
 
-    setIsLoading(true);
-    const success = await signUp(
-      email.toLowerCase().trim(),
+    // Validate phone number (basic validation)
+    const phoneNum = parseInt(phoneNumber);
+    if (isNaN(phoneNum) || phoneNumber.length < 10) {
+      Alert.alert("Error", "Please enter a valid phone number");
+      return;
+    }
+
+    // Parse birthday
+    const birthdayDate = new Date(birthday);
+    if (isNaN(birthdayDate.getTime())) {
+      Alert.alert("Error", "Please enter a valid birthday (YYYY-MM-DD)");
+      return;
+    }
+
+    const success = await signUp({
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
       password,
-      name.trim()
-    );
-    setIsLoading(false);
+      birthday: birthdayDate,
+      phoneNumber: phoneNum,
+      address: address.trim(),
+    });
 
     if (success) {
-      router.replace("/(authenticated)/home");
-    } else {
-      Alert.alert("Error", "An account with this email already exists");
+      router.replace("/(tabs)/home");
+    } else if (error) {
+      Alert.alert("Error", error);
+      clearError();
     }
   };
 
@@ -128,6 +149,43 @@ export default function SignUpScreen() {
               onChangeText={setConfirmPassword}
               secureTextEntry
               autoCapitalize="none"
+              autoCorrect={false}
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Birthday</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="YYYY-MM-DD"
+              value={birthday}
+              onChangeText={setBirthday}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Phone Number</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your phone number"
+              value={phoneNumber}
+              onChangeText={setPhoneNumber}
+              keyboardType="phone-pad"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Address</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your address"
+              value={address}
+              onChangeText={setAddress}
+              autoCapitalize="words"
               autoCorrect={false}
             />
           </View>

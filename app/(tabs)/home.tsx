@@ -1,298 +1,250 @@
-import Feather from "@expo/vector-icons/Feather";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { useState } from "react";
-
+import { Wallet } from "@/database/schemas/Wallet";
+import { useAuthStore } from "@/stores/authStore";
+import { useWalletStore } from "@/stores/walletStore";
+import React, { useEffect, useState } from "react";
 import {
-  Alert,
-  Dimensions,
-  FlatList,
-  Image,
+  RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { LineChart } from "react-native-gifted-charts";
-import { SafeAreaView } from "react-native-safe-area-context";
 
-const data_transaction = [
-  {
-    id: "1",
-    type: "income",
-    note: "Lương tháng 13",
-    name: "Lương",
-    amount: 5000000,
-  },
-  {
-    id: "2",
-    type: "expense",
-    note: "Mua quần áo",
-    name: "Mua sắm",
-    amount: 2000000,
-  },
-  {
-    id: "3",
-    type: "income",
-    note: "làm job ở mô mô",
-    name: "Làm thêm",
-    amount: 3000000,
-  },
-  {
-    id: "4",
-    type: "expense",
-    note: "mua gì mua lăm",
-    name: "Mua sắm",
-    amount: 1000000,
-  },
-];
+const HomeScreen = () => {
+  const { user } = useAuthStore();
+  const { wallets, loadWallets, isLoading } = useWalletStore();
+  const [refreshing, setRefreshing] = useState(false);
 
-const incomeData = [
-  { value: 2000000, label: "15 APR", customData: data_transaction[2] }, // job làm thêm
-  { value: 0 },
-  { value: 3000000, customData: data_transaction[0] }, // lương tháng 13
-  { value: 0 },
-  { value: 5000000, customData: data_transaction[0] },
-  { value: 0 },
-  { value: 0, label: "21 APR" },
-];
+  const onRefresh = async () => {
+    if (user) {
+      setRefreshing(true);
+      await loadWallets(user._id.toString());
+      setRefreshing(false);
+    }
+  };
 
-const expenseData = [
-  { value: 0, label: "15 APR" },
-  { value: 2000000, customData: data_transaction[1] }, // mua quần áo
-  { value: 0 },
-  { value: 1000000, customData: data_transaction[3] }, // mua sắm
-  { value: 0 },
-  { value: 0 },
-  { value: 0, label: "21 APR" },
-];
+  useEffect(() => {
+    if (user) {
+      loadWallets(user._id.toString());
+    }
+  }, [user, loadWallets]);
 
-const data = [{ value: 50 }, { value: 80 }, { value: 90 }, { value: 70 }];
-const { width } = Dimensions.get("window");
-const Home = () => {
-  const [selected, setSelected] = useState(null);
+  const getTotalBalance = () => {
+    return wallets.reduce((total, wallet) => total + wallet.amount, 0);
+  };
+
   return (
-    <View style={styles.container}>
-      <FlatList
-        data={data_transaction}
-        ListHeaderComponent={
-          <>
-            <SafeAreaView style={styles.header}>
-              <View style={styles.headerAccount}>
-                <Image
-                  source={require("../../assets/images/favicon.png")}
-                  style={styles.logo}
-                />
-                <Text>Hello Đăng</Text>
-                <Ionicons name="notifications" size={24} color="black" />
-              </View>
-              <Text style={styles.balanceText}>Số dư</Text>
-              <Text style={styles.moneyText}>20,000,000 đ</Text>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  marginTop: 16,
-                  paddingHorizontal: 16,
-                }}
-              >
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: 8,
-                    backgroundColor: "green",
-                    borderRadius: 28,
-                    padding: 16,
-                    width: "48%",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <View
-                    style={{
-                      backgroundColor: "white",
-                      borderRadius: 8,
-                      padding: 8,
-                      width: 48,
-                      height: 48,
-                      justifyContent: "center",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Feather name="trending-up" size={24} color="green" />
-                  </View>
-                  <View>
-                    <Text style={{ color: "white" }}>Thu nhập</Text>
-                    <Text style={{ color: "white" }}>+ 5,000,000 đ</Text>
-                  </View>
-                </View>
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: 8,
-                    backgroundColor: "red",
-                    borderRadius: 28,
-                    padding: 16,
-                    width: "48%",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <View
-                    style={{
-                      backgroundColor: "white",
-                      borderRadius: 8,
-                      padding: 8,
-                      width: 48,
-                      height: 48,
-                      justifyContent: "center",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Feather name="trending-down" size={24} color="red" />
-                  </View>
-                  <View>
-                    <Text style={{ color: "white" }}>Chi tiêu</Text>
-                    <Text style={{ color: "white" }}>- 5,000,000 đ</Text>
-                  </View>
-                </View>
-              </View>
-            </SafeAreaView>
-            <View style={{ padding: 16 }}>
-              <LineChart
-                areaChart
-                curved
-                data={incomeData}
-                data2={expenseData}
-                startFillColor="rgba(61, 153, 252, 0.3)"
-                startFillColor2="rgba(255, 110, 141, 0.3)"
-                endFillColor="rgba(171, 212, 255, 0.05)"
-                endFillColor2="rgba(255, 181, 197, 0.05)"
-                color1="blue"
-                color2="red"
-                dataPointsColor1="blue"
-                dataPointsColor2="red"
-                showVerticalLines
-                spacing={40}
-                yAxisTextStyle={{ color: "#555" }}
-                xAxisColor="#ccc"
-                yAxisColor="#ccc"
-                hideDataPoints={false}
-                width={width - 32}
-                onPress={(point: any) => {
-                  if (point?.customData) {
-                    setSelected(point.customData);
-                    Alert.alert(
-                      point.customData.type === "income"
-                        ? "Thu nhập"
-                        : "Chi tiêu",
-                      `${point.customData.name} - ${
-                        point.customData.note
-                      }\nSố tiền: ${point.customData.amount.toLocaleString()} VND`
-                    );
-                  }
-                }}
-              />
-            </View>
-            <View
-              style={{
-                justifyContent: "space-between",
-                flexDirection: "row",
-                padding: 16,
-              }}
-            >
-              <Text>Giao dịch gần đây</Text>
-              <TouchableOpacity>
-                <Text>Xem tất cả</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={{ height: 4, backgroundColor: "#fcf8eeff" }} />
-          </>
-        }
-        renderItem={({ item }) => (
-          <View
-            style={{
-              flexDirection: "row",
-              padding: 16,
-              width: "100%",
-            }}
-          >
-            <View
-              style={{
-                backgroundColor: "#ffdb80ff",
-                padding: 8,
-                height: 48,
-                width: 48,
-                borderRadius: 8,
-              }}
-            ></View>
-            <View
-              style={{
-                width: "90%",
-                paddingHorizontal: 8,
-                justifyContent: "space-between",
-              }}
-            >
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Text>{item.name}</Text>
-                <Text
-                  style={{ color: item.type === "expense" ? "red" : "green" }}
-                >
-                  {item.type === "expense" ? "-" : "+"} {item.amount}
-                </Text>
-              </View>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Text>{item.note}</Text>
-                <Text>10:00 AM</Text>
-              </View>
-            </View>
+    <ScrollView
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
+      <View style={styles.header}>
+        <Text style={styles.welcomeText}>Welcome back,</Text>
+        <Text style={styles.userName}>{user?.name || "User"}</Text>
+      </View>
+
+      <View style={styles.balanceCard}>
+        <Text style={styles.balanceLabel}>Total Balance</Text>
+        <Text style={styles.balanceAmount}>
+          $
+          {getTotalBalance().toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+          })}
+        </Text>
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>My Wallets</Text>
+          <Text style={styles.walletCount}>({wallets.length})</Text>
+        </View>
+
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Loading wallets...</Text>
           </View>
+        ) : wallets.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No wallets found</Text>
+            <Text style={styles.emptySubText}>
+              Create your first wallet to get started
+            </Text>
+          </View>
+        ) : (
+          wallets.map((wallet: Wallet) => (
+            <TouchableOpacity
+              key={wallet._id.toString()}
+              style={styles.walletCard}
+            >
+              <View style={styles.walletInfo}>
+                <Text style={styles.walletName}>{wallet.name}</Text>
+                <Text style={styles.walletType}>{wallet.type}</Text>
+              </View>
+              <Text style={styles.walletAmount}>
+                $
+                {wallet.amount.toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                })}
+              </Text>
+            </TouchableOpacity>
+          ))
         )}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingBottom: 100 }}
-      />
-    </View>
+      </View>
+
+      <View style={styles.quickActions}>
+        <Text style={styles.sectionTitle}>Quick Actions</Text>
+        <View style={styles.actionButtons}>
+          <TouchableOpacity style={styles.actionButton}>
+            <Text style={styles.actionButtonText}>Add Transaction</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionButton}>
+            <Text style={styles.actionButtonText}>Create Budget</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </ScrollView>
   );
 };
 
-export default Home;
+export default HomeScreen;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "white",
-  },
-  logo: {
-    width: 30,
-    height: 30,
-    borderRadius: 30,
-    resizeMode: "contain",
+    backgroundColor: "#f5f5f5",
   },
   header: {
-    backgroundColor: "#fcf8eeff",
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
-  headerAccount: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 16,
-  },
-  balanceText: {
+  welcomeText: {
     fontSize: 16,
-    textAlign: "center",
+    color: "#666",
   },
-  moneyText: {
+  userName: {
     fontSize: 24,
     fontWeight: "bold",
+    color: "#333",
+    marginTop: 4,
+  },
+  balanceCard: {
+    backgroundColor: "#007AFF",
+    marginHorizontal: 20,
+    marginBottom: 20,
+    padding: 20,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  balanceLabel: {
+    fontSize: 16,
+    color: "#B3D9FF",
+    marginBottom: 8,
+  },
+  balanceAmount: {
+    fontSize: 32,
+    fontWeight: "bold",
+    color: "#fff",
+  },
+  section: {
+    backgroundColor: "#fff",
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderRadius: 12,
+    padding: 20,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+  },
+  walletCount: {
+    fontSize: 16,
+    color: "#666",
+    marginLeft: 8,
+  },
+  loadingContainer: {
+    alignItems: "center",
+    paddingVertical: 20,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: "#666",
+  },
+  emptyContainer: {
+    alignItems: "center",
+    paddingVertical: 30,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#666",
+    marginBottom: 8,
+  },
+  emptySubText: {
+    fontSize: 14,
+    color: "#999",
     textAlign: "center",
+  },
+  walletCard: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    backgroundColor: "#f9f9f9",
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  walletInfo: {
+    flex: 1,
+  },
+  walletName: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 4,
+  },
+  walletType: {
+    fontSize: 14,
+    color: "#666",
+    textTransform: "capitalize",
+  },
+  walletAmount: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#007AFF",
+  },
+  quickActions: {
+    backgroundColor: "#fff",
+    marginHorizontal: 20,
+    marginBottom: 40,
+    borderRadius: 12,
+    padding: 20,
+  },
+  actionButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 16,
+  },
+  actionButton: {
+    flex: 1,
+    backgroundColor: "#007AFF",
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginHorizontal: 6,
+  },
+  actionButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

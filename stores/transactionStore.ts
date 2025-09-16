@@ -1,143 +1,324 @@
-import { databaseService } from "@/database/databaseService";
-import { Transaction } from "@/database/schemas";
 import { create } from "zustand";
-
-export interface TransactionData {
-  _id: string;
-  userId: string;
-  accountId: string;
-  categoryId: string;
-  amount: number;
-  type: string;
-  description: string;
-  date: Date;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { Transaction } from "../database/schemas/Transaction";
+import { getTransactionService, getWalletService } from "../database/services";
+import { CreateTransactionData } from "../database/services/TransactionService";
 
 interface TransactionState {
-  transactions: TransactionData[];
+  transactions: Transaction[];
   isLoading: boolean;
   error: string | null;
-
-  // Actions
-  fetchTransactions: (userId: string, limit?: number) => Promise<void>;
-  fetchAccountTransactions: (
-    accountId: string,
-    limit?: number
-  ) => Promise<void>;
-  createTransaction: (
-    userId: string,
-    accountId: string,
-    categoryId: string,
-    amount: number,
-    type: string,
-    description?: string,
-    date?: Date
-  ) => Promise<boolean>;
-  refreshTransactions: (userId: string) => Promise<void>;
 }
 
-const convertRealmTransactionToData = (
-  transaction: Transaction
-): TransactionData => ({
-  _id: transaction._id.toString(),
-  userId: transaction.userId,
-  accountId: transaction.accountId,
-  categoryId: transaction.categoryId,
-  amount: transaction.amount,
-  type: transaction.type,
-  description: transaction.description,
-  date: transaction.date,
-  createdAt: transaction.createdAt,
-  updatedAt: transaction.updatedAt,
-});
+interface TransactionActions {
+  loadTransactionsByWallet: (walletId: string) => Promise<void>;
+  loadTransactionsByCategory: (categoryId: string) => Promise<void>;
+  loadTransactionsByType: (type: "income" | "expense") => Promise<void>;
+  loadTransactionsWithFilters: (filters: {
+    walletIds?: string[];
+    categoryIds?: string[];
+    type?: "income" | "expense";
+    startDate?: Date;
+    endDate?: Date;
+    limit?: number;
+  }) => Promise<void>;
+  createTransaction: (
+    transactionData: CreateTransactionData
+  ) => Promise<boolean>;
+  updateTransaction: (
+    transactionId: string,
+    updateData: Partial<CreateTransactionData>
+  ) => Promise<boolean>;
+  deleteTransaction: (transactionId: string) => Promise<boolean>;
+  clearError: () => void;
+  clearTransactions: () => void;
+}
 
-export const useTransactionStore = create<TransactionState>((set, get) => ({
+type TransactionStore = TransactionState & TransactionActions;
+
+export const useTransactionStore = create<TransactionStore>((set, get) => ({
+  // Initial state
   transactions: [],
   isLoading: false,
   error: null,
 
-  fetchTransactions: async (userId: string, limit?: number) => {
+  // Actions
+  loadTransactionsByWallet: async (walletId: string) => {
+    set({ isLoading: true, error: null });
+
     try {
-      set({ isLoading: true, error: null });
-
-      const realmTransactions = databaseService.getUserTransactions(
-        userId,
-        limit
-      );
-      const transactions = Array.isArray(realmTransactions)
-        ? realmTransactions.map(convertRealmTransactionToData)
-        : Array.from(realmTransactions).map(convertRealmTransactionToData);
-
-      set({ transactions, isLoading: false });
+      const transactions =
+        getTransactionService().getTransactionsByWalletId(walletId);
+      set({
+        transactions,
+        isLoading: false,
+      });
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to fetch transactions";
-      console.error("Fetch transactions error:", errorMessage);
-      set({ error: errorMessage, isLoading: false });
+      console.error("Load transactions by wallet error:", error);
+      set({
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to load transactions",
+        isLoading: false,
+      });
     }
   },
 
-  fetchAccountTransactions: async (accountId: string, limit?: number) => {
+  loadTransactionsByCategory: async (categoryId: string) => {
+    set({ isLoading: true, error: null });
+
     try {
-      set({ isLoading: true, error: null });
-
-      const realmTransactions = databaseService.getAccountTransactions(
-        accountId,
-        limit
-      );
-      const transactions = Array.isArray(realmTransactions)
-        ? realmTransactions.map(convertRealmTransactionToData)
-        : Array.from(realmTransactions).map(convertRealmTransactionToData);
-
-      set({ transactions, isLoading: false });
+      const transactions =
+        getTransactionService().getTransactionsByCategoryId(categoryId);
+      set({
+        transactions,
+        isLoading: false,
+      });
     } catch (error) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Failed to fetch account transactions";
-      console.error("Fetch account transactions error:", errorMessage);
-      set({ error: errorMessage, isLoading: false });
+      console.error("Load transactions by category error:", error);
+      set({
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to load transactions",
+        isLoading: false,
+      });
+    }
+  },
+
+  loadTransactionsByType: async (type: "income" | "expense") => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const transactions = getTransactionService().getTransactionsByType(type);
+      set({
+        transactions,
+        isLoading: false,
+      });
+    } catch (error) {
+      console.error("Load transactions by type error:", error);
+      set({
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to load transactions",
+        isLoading: false,
+      });
+    }
+  },
+
+  loadTransactionsWithFilters: async (filters) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const transactions =
+        getTransactionService().getTransactionsWithFilters(filters);
+      set({
+        transactions,
+        isLoading: false,
+      });
+    } catch (error) {
+      console.error("Load transactions with filters error:", error);
+      set({
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to load transactions",
+        isLoading: false,
+      });
     }
   },
 
   createTransaction: async (
-    userId: string,
-    accountId: string,
-    categoryId: string,
-    amount: number,
-    type: string,
-    description = "",
-    date = new Date()
-  ) => {
+    transactionData: CreateTransactionData
+  ): Promise<boolean> => {
+    set({ isLoading: true, error: null });
+
     try {
-      set({ error: null });
+      const transaction =
+        getTransactionService().createTransaction(transactionData);
 
-      databaseService.createTransaction(
-        userId,
-        accountId,
-        categoryId,
-        amount,
-        type,
-        description,
-        date
-      );
+      // Update wallet amount based on transaction type
+      const wallet = getWalletService().getWalletById(transactionData.walletId);
+      if (wallet) {
+        const newAmount =
+          transactionData.type === "income"
+            ? wallet.amount + transactionData.amount
+            : wallet.amount - transactionData.amount;
 
-      // Refresh transactions list
-      await get().fetchTransactions(userId);
+        getWalletService().updateWalletAmount(
+          transactionData.walletId,
+          newAmount
+        );
+      }
 
+      const { transactions } = get();
+      set({
+        transactions: [transaction, ...transactions],
+        isLoading: false,
+      });
       return true;
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to create transaction";
-      console.error("Create transaction error:", errorMessage);
-      set({ error: errorMessage });
+      console.error("Create transaction error:", error);
+      set({
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to create transaction",
+        isLoading: false,
+      });
       return false;
     }
   },
 
-  refreshTransactions: async (userId: string) => {
-    await get().fetchTransactions(userId);
+  updateTransaction: async (
+    transactionId: string,
+    updateData: Partial<CreateTransactionData>
+  ): Promise<boolean> => {
+    set({ isLoading: true, error: null });
+
+    try {
+      // Get the original transaction to calculate wallet amount differences
+      const originalTransaction =
+        getTransactionService().getTransactionById(transactionId);
+      if (!originalTransaction) {
+        set({
+          error: "Transaction not found",
+          isLoading: false,
+        });
+        return false;
+      }
+
+      const updatedTransaction = getTransactionService().updateTransaction(
+        transactionId,
+        updateData
+      );
+
+      if (updatedTransaction) {
+        // Update wallet amount if amount or type changed
+        if (updateData.amount !== undefined || updateData.type !== undefined) {
+          const wallet = getWalletService().getWalletById(
+            updatedTransaction.walletId
+          );
+          if (wallet) {
+            // Reverse the original transaction effect
+            const originalEffect =
+              originalTransaction.type === "income"
+                ? -originalTransaction.amount
+                : originalTransaction.amount;
+
+            // Apply the new transaction effect
+            const newEffect =
+              updatedTransaction.type === "income"
+                ? updatedTransaction.amount
+                : -updatedTransaction.amount;
+
+            const newAmount = wallet.amount + originalEffect + newEffect;
+            getWalletService().updateWalletAmount(
+              updatedTransaction.walletId,
+              newAmount
+            );
+          }
+        }
+
+        const { transactions } = get();
+        const updatedTransactions = transactions.map((t) =>
+          t._id.toString() === transactionId ? updatedTransaction : t
+        );
+
+        set({
+          transactions: updatedTransactions,
+          isLoading: false,
+        });
+        return true;
+      } else {
+        set({
+          error: "Transaction not found",
+          isLoading: false,
+        });
+        return false;
+      }
+    } catch (error) {
+      console.error("Update transaction error:", error);
+      set({
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to update transaction",
+        isLoading: false,
+      });
+      return false;
+    }
+  },
+
+  deleteTransaction: async (transactionId: string): Promise<boolean> => {
+    set({ isLoading: true, error: null });
+
+    try {
+      // Get the transaction to reverse its effect on wallet
+      const transaction =
+        getTransactionService().getTransactionById(transactionId);
+      if (!transaction) {
+        set({
+          error: "Transaction not found",
+          isLoading: false,
+        });
+        return false;
+      }
+
+      const success = getTransactionService().deleteTransaction(transactionId);
+
+      if (success) {
+        // Reverse the transaction effect on wallet
+        const wallet = getWalletService().getWalletById(transaction.walletId);
+        if (wallet) {
+          const amountToReverse =
+            transaction.type === "income"
+              ? -transaction.amount
+              : transaction.amount;
+
+          const newAmount = wallet.amount + amountToReverse;
+          getWalletService().updateWalletAmount(
+            transaction.walletId,
+            newAmount
+          );
+        }
+
+        const { transactions } = get();
+        const updatedTransactions = transactions.filter(
+          (t) => t._id.toString() !== transactionId
+        );
+
+        set({
+          transactions: updatedTransactions,
+          isLoading: false,
+        });
+        return true;
+      } else {
+        set({
+          error: "Transaction not found",
+          isLoading: false,
+        });
+        return false;
+      }
+    } catch (error) {
+      console.error("Delete transaction error:", error);
+      set({
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to delete transaction",
+        isLoading: false,
+      });
+      return false;
+    }
+  },
+
+  clearError: () => {
+    set({ error: null });
+  },
+
+  clearTransactions: () => {
+    set({ transactions: [] });
   },
 }));
