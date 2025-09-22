@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Header from "@/components/HeaderApp";
 
 const ProfileScreen = () => {
   const { user, signOut } = useAuthStore();
