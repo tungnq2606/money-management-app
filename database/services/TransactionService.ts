@@ -210,6 +210,17 @@ class TransactionService {
       throw error;
     }
   }
+
+  getAllTransactions(): Transaction[] {
+    try {
+      return Array.from(
+        this.realm.objects<Transaction>("Transaction").sorted("createdAt", true)
+      );
+    } catch (error) {
+      console.error("Error getting all transactions:", error);
+      throw error;
+    }
+  }
 }
 
 export default TransactionService;

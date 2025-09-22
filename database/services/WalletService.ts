@@ -125,6 +125,17 @@ class WalletService {
       throw error;
     }
   }
+
+  getAllWallets(): Wallet[] {
+    try {
+      return Array.from(
+        this.realm.objects<Wallet>("Wallet").sorted("createdAt", true)
+      );
+    } catch (error) {
+      console.error("Error getting all wallets:", error);
+      throw error;
+    }
+  }
 }
 
 export default WalletService;

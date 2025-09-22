@@ -162,6 +162,17 @@ class CategoryService {
       throw error;
     }
   }
+
+  getAllCategories(): Category[] {
+    try {
+      return Array.from(
+        this.realm.objects<Category>("Category").sorted("createdAt", true)
+      );
+    } catch (error) {
+      console.error("Error getting all categories:", error);
+      throw error;
+    }
+  }
 }
 
 export default CategoryService;
