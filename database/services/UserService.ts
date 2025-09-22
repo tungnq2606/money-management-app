@@ -138,6 +138,17 @@ class UserService {
       throw error;
     }
   }
+
+  getAllUsers(): User[] {
+    try {
+      return Array.from(
+        this.realm.objects<User>("User").sorted("createdAt", true)
+      );
+    } catch (error) {
+      console.error("Error getting all users:", error);
+      throw error;
+    }
+  }
 }
 
 export default UserService;
