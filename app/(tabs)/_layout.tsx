@@ -166,6 +166,6 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: Colors.light.tint,
+    backgroundColor: "#7F3DFF",
   },
 });
