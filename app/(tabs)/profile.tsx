@@ -35,7 +35,9 @@ const ProfileScreen = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.avatarContainer}>{/* <Image /> */}</View>
+        <View style={styles.avatarContainer}>
+          <Feather name="user" size={60} color="#ccc" />
+        </View>
         <View style={styles.userNameContainer}>
           <Text style={styles.userName}>Username</Text>
           <Text style={styles.txtName}>{user?.name}</Text>
@@ -44,51 +46,6 @@ const ProfileScreen = () => {
           <Feather name="edit-2" size={24} color="black" />
         </TouchableOpacity>
       </View>
-
-      {/* {user && (
-        <View style={styles.userInfo}>
-          <View style={styles.infoItem}>
-            <Text style={styles.label}>Name:</Text>
-            <Text style={styles.value}>{user.name}</Text>
-          </View>
-
-          <View style={styles.infoItem}>
-            <Text style={styles.label}>Email:</Text>
-            <Text style={styles.value}>{user.email}</Text>
-          </View>
-
-          <View style={styles.infoItem}>
-            <Text style={styles.label}>Phone:</Text>
-            <Text style={styles.value}>{user.phoneNumber}</Text>
-          </View>
-
-          <View style={styles.infoItem}>
-            <Text style={styles.label}>Address:</Text>
-            <Text style={styles.value}>{user.address}</Text>
-          </View>
-
-          <View style={styles.infoItem}>
-            <Text style={styles.label}>Birthday:</Text>
-            <Text style={styles.value}>
-              {new Date(user.birthday).toLocaleDateString()}
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={[
-              styles.signOutButton,
-              isLoggingOut && styles.buttonDisabled,
-            ]}
-            onPress={handleSignOut}
-            disabled={isLoggingOut}
-          >
-            {isLoggingOut ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <Text style={styles.signOutButtonText}>Sign Out</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-      )} */}
 
       <View style={styles.viewBody}>
         {data_profile.map((item, index) => (
@@ -201,6 +158,8 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     borderWidth: 1,
     borderColor: "#AD00FF",
+    alignItems: "center",
+    justifyContent: "center",
   },
   userName: {
     fontSize: 14,

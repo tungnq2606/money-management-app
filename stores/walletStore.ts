@@ -8,6 +8,7 @@ interface WalletState {
   selectedWallet: Wallet | null;
   isLoading: boolean;
   error: string | null;
+  totalAmount: number | 0;
 }
 
 interface WalletActions {
@@ -31,6 +32,7 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
   selectedWallet: null,
   isLoading: false,
   error: null,
+  totalAmount: 0,
 
   // Actions
   loadWallets: async (userId: string) => {
@@ -38,8 +40,10 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
 
     try {
       const wallets = getWalletService().getWalletsByUserId(userId);
+      const totalAmount = getWalletService().getTotalWalletAmount(userId);
       set({
         wallets,
+        totalAmount,
         isLoading: false,
       });
     } catch (error) {

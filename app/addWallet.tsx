@@ -1,6 +1,9 @@
+import { useAuthStore, useWalletStore } from "@/stores";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
+import { useState } from "react";
 import {
+  Alert,
   StyleSheet,
   Text,
   TextInput,
@@ -9,6 +12,54 @@ import {
 } from "react-native";
 
 const AddWallet = () => {
+  const { user } = useAuthStore();
+  const { createWallet } = useWalletStore();
+  const [value, setValue] = useState({
+    name: "",
+    amount: "",
+    type: "cash",
+  });
+
+  const handleAddWallet = async () => {
+    const { name, amount, type } = value;
+
+    if (!name || !amount) {
+      Alert.alert("Error", "Please fill in all required fields.");
+      return;
+    }
+
+    if (!user?._id) {
+      Alert.alert("Error", "User not found.");
+      return;
+    }
+
+    const walletData = {
+      userId: String(user._id),
+      name,
+      type,
+      amount: parseFloat(amount),
+    };
+
+    try {
+      const success = await createWallet(walletData);
+      if (success) {
+        Alert.alert("Success", "Wallet created successfully!", [
+          {
+            text: "OK",
+            onPress: () => {
+              router.back();
+            },
+          },
+        ]);
+      } else {
+        Alert.alert("Error", "Failed to create wallet.");
+      }
+    } catch (error) {
+      console.error("Error creating wallet:", error);
+      Alert.alert("Error", "An unexpected error occurred.");
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.viewHeader}>
@@ -22,17 +73,53 @@ const AddWallet = () => {
       <TextInput
         placeholder="Wallet Name"
         style={styles.input}
+        value={value.name}
+        onChangeText={(text) => setValue({ ...value, name: text })}
         placeholderTextColor={"#8f8e8eff"}
       />
       <TextInput
         placeholder="Amount"
         style={styles.input}
+        value={value.amount}
+        onChangeText={(text) => setValue({ ...value, amount: text })}
         placeholderTextColor={"#8f8e8eff"}
         keyboardType="numeric"
       />
+      <View style={{ flexDirection: "row" }}>
+        <TouchableOpacity
+          style={styles.touchSelect}
+          onPress={() => setValue({ ...value, type: "expense" })}
+        >
+          <Ionicons
+            name={
+              value.type === "cash"
+                ? "radio-button-on-outline"
+                : "radio-button-off-outline"
+            }
+            size={24}
+            color={value.type === "cash" ? "#7F3DFF" : "black"}
+          />
+          <Text style={styles.txtIncome}>Cash</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.touchSelect}
+          onPress={() => setValue({ ...value, type: "income" })}
+        >
+          <Ionicons
+            name={
+              value.type === "card"
+                ? "radio-button-on-outline"
+                : "radio-button-off-outline"
+            }
+            size={24}
+            color={value.type === "card" ? "#7F3DFF" : "black"}
+          />
+          <Text style={styles.txtIncome}>Card</Text>
+        </TouchableOpacity>
+      </View>
       <View style={styles.viewAdd}>
-        <TouchableOpacity style={styles.btnAdd}>
-          <Text style={styles.txtAdd}>Confirm</Text>
+        <TouchableOpacity style={styles.btnAdd} onPress={handleAddWallet}>
+          <Text style={styles.txtAdd}>Add</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -87,5 +174,15 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderWidth: 1,
     borderColor: "#ccc",
+  },
+  touchSelect: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: 20,
+    padding: 10,
+    marginBottom: 20,
+  },
+  txtIncome: {
+    marginLeft: 10,
   },
 });

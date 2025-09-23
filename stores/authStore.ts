@@ -144,7 +144,6 @@ export const useAuthStore = create<AuthStore>()(
             user._id.toString(),
             userData
           );
-
           if (updatedUser) {
             set({
               user: updatedUser,

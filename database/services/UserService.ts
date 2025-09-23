@@ -9,7 +9,7 @@ export interface CreateUserData {
   phoneNumber: number;
   address: string;
   email: string;
-  password: string;
+  password?: string;
 }
 
 export interface SignInData {

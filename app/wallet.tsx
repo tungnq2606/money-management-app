@@ -1,8 +1,38 @@
+import { formatMoney } from "@/constants/formatMoney";
+import { useAuthStore, useWalletStore } from "@/stores";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useIsFocused } from "@react-navigation/native";
 import { router } from "expo-router";
+import { useEffect, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+interface WalletItem {
+  id: number;
+  name: string;
+  amount: number;
+}
+
 const Wallet = () => {
+  const { user } = useAuthStore();
+  const { loadWallets, wallets, totalAmount } = useWalletStore();
+  const [data, setData] = useState<any>([]);
+  const [total, setTotal] = useState<number>(0);
+  const isFocused = useIsFocused();
+
+  useEffect(() => {
+    if (user?._id) {
+      loadWallets(String(user._id));
+    }
+
+    if (totalAmount) {
+      setTotal(totalAmount);
+    }
+
+    if (wallets) {
+      setData(wallets);
+    }
+  }, [isFocused]);
+
   return (
     <View style={styles.container}>
       <View style={styles.viewHeader}>
@@ -14,17 +44,17 @@ const Wallet = () => {
       </View>
       <View style={styles.viewBalance}>
         <Text style={styles.txtAccountBalance}>Account Balance</Text>
-        <Text style={styles.txtBalance}>2000000đ</Text>
+        <Text style={styles.txtBalance}>{formatMoney(total)}</Text>
       </View>
 
       <View style={{ marginTop: 30 }}>
-        {data_wallet.map((item, index) => (
+        {data.map((item: WalletItem, index: number) => (
           <View
             key={index}
             style={[
               styles.itemWallet,
               {
-                borderBottomWidth: index === data_wallet.length - 1 ? 0 : 1,
+                borderBottomWidth: index === data.length - 1 ? 0 : 1,
                 borderBottomColor: "#dcdcdcff",
               },
             ]}
@@ -33,9 +63,9 @@ const Wallet = () => {
               <View style={styles.viewIcon}>
                 <Ionicons name="wallet" size={24} color="#7F3DFF" />
               </View>
-              <Text style={styles.txtName}>{item.name}</Text>
+              <Text style={styles.txtName}>{item?.name}</Text>
             </View>
-            <Text style={styles.txtAmount}>{item.amount}đ</Text>
+            <Text style={styles.txtAmount}>{formatMoney(item?.amount)}</Text>
           </View>
         ))}
       </View>
