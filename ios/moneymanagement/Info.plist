@@ -81,5 +81,9 @@
     <string>Automatic</string>
     <key>UIViewControllerBasedStatusBarAppearance</key>
     <false/>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>This app needs access to your photo library to attach images to your transactions for better record keeping.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>This app needs access to your camera to take photos of receipts and attach them to your transactions.</string>
   </dict>
 </plist>

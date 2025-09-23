@@ -50,8 +50,8 @@ export default function TabLayout() {
       tension: 120,
       friction: 7,
     }).start();
-    // Navigate to add income
-    router.push("/addWallet?type=income");
+    // Navigate to add income transaction
+    router.push("/addTransaction?type=income");
   };
 
   const handleExpensePress = () => {
@@ -62,8 +62,8 @@ export default function TabLayout() {
       tension: 120,
       friction: 7,
     }).start();
-    // Navigate to add expense
-    router.push("/addWallet?type=expense");
+    // Navigate to add expense transaction
+    router.push("/addTransaction?type=expense");
   };
 
   const _renderIcon = (routeName: string, selectedTab: string) => {

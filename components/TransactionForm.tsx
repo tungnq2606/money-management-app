@@ -1,0 +1,409 @@
+import { AntDesign, Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import React, { useState } from "react";
+import {
+  Alert,
+  Image,
+  Modal,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+
+interface TransactionFormProps {
+  category: string;
+  setCategory: (value: string) => void;
+  description: string;
+  setDescription: (value: string) => void;
+  wallet: string;
+  setWallet: (value: string) => void;
+  imageUri: string | null;
+  setImageUri: (uri: string | null) => void;
+  isIncome: boolean;
+  buttonColor: string;
+  onSave: () => void;
+}
+
+const TransactionForm: React.FC<TransactionFormProps> = ({
+  category,
+  setCategory,
+  description,
+  setDescription,
+  wallet,
+  setWallet,
+  imageUri,
+  setImageUri,
+  isIncome,
+  buttonColor,
+  onSave,
+}) => {
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showWalletModal, setShowWalletModal] = useState(false);
+
+  const incomeCategories = [
+    "Salary",
+    "Freelance",
+    "Business",
+    "Investment",
+    "Gift",
+    "Other Income",
+  ];
+
+  const expenseCategories = [
+    "Food & Dining",
+    "Shopping",
+    "Transportation",
+    "Entertainment",
+    "Bills & Utilities",
+    "Healthcare",
+    "Education",
+    "Travel",
+    "Other Expense",
+  ];
+
+  const wallets = [
+    "Cash",
+    "Bank Account",
+    "Credit Card",
+    "Savings",
+    "Investment",
+  ];
+
+  const categories = isIncome ? incomeCategories : expenseCategories;
+
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission denied",
+        "We need camera roll permissions to select an image."
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setImageUri(result.assets[0].uri);
+    }
+  };
+
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission denied",
+        "We need camera permissions to take a photo."
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setImageUri(result.assets[0].uri);
+    }
+  };
+
+  const showImagePicker = () => {
+    Alert.alert("Select Image", "Choose an option", [
+      { text: "Camera", onPress: takePhoto },
+      { text: "Gallery", onPress: pickImage },
+      { text: "Cancel", style: "cancel" },
+    ]);
+  };
+
+  const removeImage = () => {
+    setImageUri(null);
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.inputSection}>
+        {/* Category Dropdown */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Category</Text>
+          <TouchableOpacity
+            style={styles.dropdownButton}
+            onPress={() => setShowCategoryModal(true)}
+          >
+            <Text
+              style={[styles.dropdownText, !category && styles.placeholderText]}
+            >
+              {category || "Select category"}
+            </Text>
+            <AntDesign name="down" size={16} color="#666" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Description Input */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Description</Text>
+          <TextInput
+            style={styles.input}
+            value={description}
+            onChangeText={setDescription}
+            placeholder="Add a note"
+            placeholderTextColor="#C4C4C4"
+          />
+        </View>
+
+        {/* Wallet Dropdown */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Wallet</Text>
+          <TouchableOpacity
+            style={styles.dropdownButton}
+            onPress={() => setShowWalletModal(true)}
+          >
+            <Text
+              style={[styles.dropdownText, !wallet && styles.placeholderText]}
+            >
+              {wallet || "Select wallet"}
+            </Text>
+            <AntDesign name="down" size={16} color="#666" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Attach Image */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Attach Image</Text>
+          {imageUri ? (
+            <View style={styles.imageContainer}>
+              <Image source={{ uri: imageUri }} style={styles.attachedImage} />
+              <TouchableOpacity
+                style={styles.removeImageButton}
+                onPress={removeImage}
+              >
+                <AntDesign name="close" size={16} color="#FFF" />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.attachButton}
+              onPress={showImagePicker}
+            >
+              <Ionicons name="camera-outline" size={24} color="#666" />
+              <Text style={styles.attachButtonText}>Add attachment</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      {/* Save Button */}
+      <TouchableOpacity
+        style={[styles.saveButton, { backgroundColor: buttonColor }]}
+        onPress={onSave}
+      >
+        <Text style={styles.saveButtonText}>Continue</Text>
+      </TouchableOpacity>
+
+      {/* Category Modal */}
+      <Modal
+        visible={showCategoryModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowCategoryModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Category</Text>
+              <TouchableOpacity onPress={() => setShowCategoryModal(false)}>
+                <AntDesign name="close" size={24} color="#000" />
+              </TouchableOpacity>
+            </View>
+            {categories.map((item, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.modalItem}
+                onPress={() => {
+                  setCategory(item);
+                  setShowCategoryModal(false);
+                }}
+              >
+                <Text style={styles.modalItemText}>{item}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Wallet Modal */}
+      <Modal
+        visible={showWalletModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowWalletModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Wallet</Text>
+              <TouchableOpacity onPress={() => setShowWalletModal(false)}>
+                <AntDesign name="close" size={24} color="#000" />
+              </TouchableOpacity>
+            </View>
+            {wallets.map((item, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.modalItem}
+                onPress={() => {
+                  setWallet(item);
+                  setShowWalletModal(false);
+                }}
+              >
+                <Text style={styles.modalItemText}>{item}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 32,
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+  },
+  inputSection: {
+    marginBottom: 32,
+  },
+  inputGroup: {
+    marginBottom: 24,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#000",
+    marginBottom: 8,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    fontSize: 16,
+    color: "#000",
+    backgroundColor: "#FAFAFA",
+  },
+  dropdownButton: {
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: "#FAFAFA",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  dropdownText: {
+    fontSize: 16,
+    color: "#000",
+  },
+  placeholderText: {
+    color: "#C4C4C4",
+  },
+  attachButton: {
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    backgroundColor: "#FAFAFA",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    borderStyle: "dashed",
+  },
+  attachButtonText: {
+    fontSize: 16,
+    color: "#666",
+    marginLeft: 8,
+  },
+  imageContainer: {
+    position: "relative",
+  },
+  attachedImage: {
+    width: "100%",
+    height: 120,
+    borderRadius: 12,
+    resizeMode: "cover",
+  },
+  removeImageButton: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    borderRadius: 12,
+    padding: 4,
+  },
+  saveButton: {
+    borderRadius: 16,
+    paddingVertical: 16,
+    alignItems: "center",
+    marginTop: "auto",
+    marginBottom: 32,
+  },
+  saveButtonText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: "#FFF",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 40,
+    maxHeight: "70%",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E0E0E0",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#000",
+  },
+  modalItem: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F5F5F5",
+  },
+  modalItemText: {
+    fontSize: 16,
+    color: "#000",
+  },
+});
+
+export default TransactionForm;
