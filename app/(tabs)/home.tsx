@@ -1,5 +1,6 @@
 import MonthSelector from "@/components/MonthSelector";
 import SpendFrequencyChart from "@/components/SpendFrequencyChart";
+import TransactionItem from "@/components/TransactionItem";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import React from "react";
@@ -9,6 +10,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 
@@ -32,9 +34,43 @@ const HomeScreen = () => {
     { value: 2000 },
   ];
 
+  // Sample recent transactions data
+  const recentTransactions = [
+    {
+      id: "1",
+      type: "Shopping",
+      description: "Buy some grocery",
+      amount: -120,
+      time: "10:00 AM",
+      icon: "shoppingcart",
+      color: "#FDC65C",
+    },
+    {
+      id: "2",
+      type: "Salary",
+      description: "Salary for July",
+      amount: 5000,
+      time: "04:30 PM",
+      icon: "creditcard",
+      color: "#B7F4C3",
+    },
+    {
+      id: "3",
+      type: "Food",
+      description: "Buy a ramen",
+      amount: -32,
+      time: "07:30 PM",
+      icon: "rest",
+      color: "#FFB1B1",
+    },
+  ];
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={{ paddingBottom: 48 }}
+      >
         <View style={styles.header}>
           <View style={styles.avatar}>
             <AntDesign name="user" size={24} color="white" />
@@ -75,6 +111,28 @@ const HomeScreen = () => {
           </View>
         </View>
         <SpendFrequencyChart data={chartData} />
+        <View style={styles.recentTransactionsHeader}>
+          <Text style={styles.recentTransactionsTitle}>
+            Recent Transactions
+          </Text>
+          <TouchableOpacity style={styles.viewAllButton}>
+            <Text style={styles.viewAllText}>See All</Text>
+          </TouchableOpacity>
+        </View>
+        <View>
+          {recentTransactions.map((transaction) => (
+            <TransactionItem
+              key={transaction.id}
+              id={transaction.id}
+              type={transaction.type}
+              description={transaction.description}
+              amount={transaction.amount}
+              time={transaction.time}
+              icon={transaction.icon}
+              color={transaction.color}
+            />
+          ))}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -162,5 +220,29 @@ const styles = StyleSheet.create({
   },
   accountBoxContent: {
     marginLeft: 8,
+  },
+  recentTransactionsHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+
+    marginTop: 24,
+    marginBottom: 16,
+  },
+  recentTransactionsTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#000",
+  },
+  viewAllButton: {
+    backgroundColor: "rgba(127, 61, 255, 0.2)",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  viewAllText: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#7F3DFF",
   },
 });
