@@ -7,8 +7,8 @@ export interface CreateWalletData {
   name: string;
   type: string;
   amount: number;
-  toDate: Date;
-  fromDate: Date;
+  toDate?: Date;
+  fromDate?: Date;
 }
 
 class WalletService {
@@ -28,8 +28,8 @@ class WalletService {
           name: walletData.name,
           type: walletData.type,
           amount: walletData.amount,
-          toDate: walletData.toDate,
-          fromDate: walletData.fromDate,
+          toDate: walletData.toDate || now,
+          fromDate: walletData.fromDate || now,
           createdAt: now,
           updatedAt: now,
         });
@@ -50,6 +50,19 @@ class WalletService {
           .filtered("userId == $0", userId)
           .sorted("createdAt", true)
       );
+    } catch (error) {
+      console.error("Error getting wallets by user ID:", error);
+      throw error;
+    }
+  }
+
+  getTotalWalletAmount(userId: string): number {
+    try {
+      const results = this.realm
+        .objects<Wallet>("Wallet")
+        .filtered("userId == $0", userId);
+      const total = results.reduce((sum, wallet) => sum + wallet.amount, 0);
+      return total;
     } catch (error) {
       console.error("Error getting wallets by user ID:", error);
       throw error;
