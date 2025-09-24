@@ -1,15 +1,28 @@
 import HeaderApp from "@/components/HeaderApp";
+import { useWalletStore } from "@/stores";
 import { useAuthStore } from "@/stores/authStore";
 import Feather from "@expo/vector-icons/Feather";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { router } from "expo-router";
-import { useState } from "react";
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useEffect, useState } from "react";
+import {
+  Alert,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 const ProfileScreen = () => {
   const { user, signOut } = useAuthStore();
+  const { loadWallets } = useWalletStore();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  useEffect(() => {
+    loadWallets(String(user?._id));
+  }, []);
 
   const handleSignOut = () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -38,7 +51,10 @@ const ProfileScreen = () => {
       <HeaderApp title={"Profile"} />
       <View style={styles.header}>
         <View style={styles.avatarContainer}>
-          <Feather name="user" size={60} color="#ccc" />
+          <Image
+            source={{ uri: "https://i.pravatar.cc/150?img=4" }}
+            style={{ width: 90, height: 90, borderRadius: 45 }}
+          />
         </View>
         <View style={styles.userNameContainer}>
           <Text style={styles.userName}>Username</Text>

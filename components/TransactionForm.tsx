@@ -1,3 +1,4 @@
+import { useWalletStore } from "@/stores";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
@@ -41,6 +42,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
 }) => {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showWalletModal, setShowWalletModal] = useState(false);
+  const { wallets } = useWalletStore();
 
   const incomeCategories = [
     "Salary",
@@ -63,13 +65,13 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     "Other Expense",
   ];
 
-  const wallets = [
-    "Cash",
-    "Bank Account",
-    "Credit Card",
-    "Savings",
-    "Investment",
-  ];
+  // const wallets = [
+  //   "Cash",
+  //   "Bank Account",
+  //   "Credit Card",
+  //   "Savings",
+  //   "Investment",
+  // ];
 
   const categories = isIncome ? incomeCategories : expenseCategories;
 
@@ -260,11 +262,11 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 key={index}
                 style={styles.modalItem}
                 onPress={() => {
-                  setWallet(item);
+                  setWallet(item?.name);
                   setShowWalletModal(false);
                 }}
               >
-                <Text style={styles.modalItemText}>{item}</Text>
+                <Text style={styles.modalItemText}>{item?.name}</Text>
               </TouchableOpacity>
             ))}
           </View>

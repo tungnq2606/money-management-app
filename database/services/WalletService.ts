@@ -43,12 +43,12 @@ class WalletService {
 
   getWalletsByUserId(userId: string): Wallet[] {
     try {
-      return Array.from(
-        this.realm
-          .objects<Wallet>("Wallet")
-          .filtered("userId == $0", userId)
-          .sorted("createdAt", true)
-      );
+      const wallets = this.realm
+        .objects<Wallet>("Wallet")
+        .filtered("userId == $0", userId)
+        .sorted("createdAt", true);
+
+      return Array.from(wallets);
     } catch (error) {
       console.error("Error getting wallets by user ID:", error);
       throw error;
@@ -87,14 +87,15 @@ class WalletService {
   ): Wallet | null {
     try {
       const wallet = this.getWalletById(walletId);
+      const now = new Date();
       if (!wallet) return null;
 
       this.realm.write(() => {
         if (updateData.name) wallet.name = updateData.name;
         if (updateData.type) wallet.type = updateData.type;
         if (updateData.amount !== undefined) wallet.amount = updateData.amount;
-        if (updateData.toDate) wallet.toDate = updateData.toDate;
-        if (updateData.fromDate) wallet.fromDate = updateData.fromDate;
+        if (updateData.toDate) wallet.toDate = updateData.toDate || now;
+        if (updateData.fromDate) wallet.fromDate = updateData.fromDate || now;
         wallet.updatedAt = new Date();
       });
 
@@ -124,14 +125,21 @@ class WalletService {
 
   deleteWallet(walletId: string): boolean {
     try {
-      const wallet = this.getWalletById(walletId);
-      if (!wallet) return false;
+      let deleted = false;
 
       this.realm.write(() => {
-        this.realm.delete(wallet);
+        const walletToDelete = this.realm.objectForPrimaryKey<Wallet>(
+          "Wallet",
+          new Realm.BSON.ObjectId(walletId)
+        );
+
+        if (walletToDelete) {
+          this.realm.delete(walletToDelete);
+          deleted = true;
+        }
       });
 
-      return true;
+      return deleted;
     } catch (error) {
       console.error("Error deleting wallet:", error);
       throw error;
