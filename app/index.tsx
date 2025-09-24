@@ -1,6 +1,6 @@
 import { useAuthStore } from "@/stores/authStore";
 import { router } from "expo-router";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
 export default function IndexScreen() {
@@ -8,13 +8,27 @@ export default function IndexScreen() {
 
   useEffect(() => {
     if (!isLoading) {
-      if (isAuthenticated && user) {
-        router.replace("/(tabs)/home");
-      } else {
-        router.replace("/signin");
-      }
+      // if (isAuthenticated && user) {
+      router.replace("/(tabs)/home");
+      // } else {
+      //   router.replace("/signin");
+      // }
     }
   }, [isAuthenticated, isLoading, user]);
+
+  // const realm = useRealm();
+  // useEffect(() => {
+  //   seedRealmIfNeeded(realm).catch(console.error);
+  // }, [realm]);
+
+  // const users = useQuery(User);
+  // const wallets = useQuery(Wallet);
+  // const cats = useQuery(Category);
+  // const budgets = useQuery(Budget);
+  // const trxs = useQuery(Transaction);
+  // const notifs = useQuery(Notification);
+
+  // console.log(users, wallets, cats, budgets, trxs, notifs);
 
   return (
     <View style={styles.container}>
