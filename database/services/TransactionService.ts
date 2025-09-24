@@ -1,6 +1,5 @@
 import Realm from "realm";
 import { Transaction } from "../schemas/Transaction";
-import RealmService from "./RealmService";
 
 export interface CreateTransactionData {
   walletId: string;
@@ -13,8 +12,8 @@ export interface CreateTransactionData {
 class TransactionService {
   private realm: Realm;
 
-  constructor() {
-    this.realm = RealmService.getInstance().getRealm();
+  constructor(realm: Realm) {
+    this.realm = realm;
   }
 
   createTransaction(transactionData: CreateTransactionData): Transaction {

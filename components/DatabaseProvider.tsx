@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
-import { initializeDatabase } from "../database/services";
+import { initializeGlobalRealm } from "../database/services";
 
 interface DatabaseProviderProps {
   children: React.ReactNode;
@@ -15,7 +15,7 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({
   useEffect(() => {
     const init = async () => {
       try {
-        await initializeDatabase();
+        await initializeGlobalRealm();
         setIsInitialized(true);
       } catch (err) {
         console.error("Database initialization error:", err);

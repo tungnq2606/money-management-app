@@ -1,6 +1,5 @@
 import Realm from "realm";
 import { Notification } from "../schemas/Notification";
-import RealmService from "./RealmService";
 
 export interface CreateNotificationData {
   content: string;
@@ -12,8 +11,8 @@ export interface CreateNotificationData {
 class NotificationService {
   private realm: Realm;
 
-  constructor() {
-    this.realm = RealmService.getInstance().getRealm();
+  constructor(realm: Realm) {
+    this.realm = realm;
   }
 
   createNotification(notificationData: CreateNotificationData): Notification {

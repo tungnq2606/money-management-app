@@ -1,6 +1,9 @@
 import { create } from "zustand";
 import { Transaction } from "../database/schemas/Transaction";
-import { getTransactionService, getWalletService } from "../database/services";
+import {
+  getGlobalTransactionService,
+  getGlobalWalletService,
+} from "../database/services";
 import { CreateTransactionData } from "../database/services/TransactionService";
 
 interface TransactionState {
@@ -47,7 +50,7 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
 
     try {
       const transactions =
-        getTransactionService().getTransactionsByWalletId(walletId);
+        getGlobalTransactionService().getTransactionsByWalletId(walletId);
       set({
         transactions,
         isLoading: false,
@@ -69,7 +72,7 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
 
     try {
       const transactions =
-        getTransactionService().getTransactionsByCategoryId(categoryId);
+        getGlobalTransactionService().getTransactionsByCategoryId(categoryId);
       set({
         transactions,
         isLoading: false,
@@ -90,7 +93,8 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      const transactions = getTransactionService().getTransactionsByType(type);
+      const transactions =
+        getGlobalTransactionService().getTransactionsByType(type);
       set({
         transactions,
         isLoading: false,
@@ -112,7 +116,7 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
 
     try {
       const transactions =
-        getTransactionService().getTransactionsWithFilters(filters);
+        getGlobalTransactionService().getTransactionsWithFilters(filters);
       set({
         transactions,
         isLoading: false,
@@ -136,17 +140,19 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
 
     try {
       const transaction =
-        getTransactionService().createTransaction(transactionData);
+        getGlobalTransactionService().createTransaction(transactionData);
 
       // Update wallet amount based on transaction type
-      const wallet = getWalletService().getWalletById(transactionData.walletId);
+      const wallet = getGlobalWalletService().getWalletById(
+        transactionData.walletId
+      );
       if (wallet) {
         const newAmount =
           transactionData.type === "income"
             ? wallet.amount + transactionData.amount
             : wallet.amount - transactionData.amount;
 
-        getWalletService().updateWalletAmount(
+        getGlobalWalletService().updateWalletAmount(
           transactionData.walletId,
           newAmount
         );
@@ -180,7 +186,7 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
     try {
       // Get the original transaction to calculate wallet amount differences
       const originalTransaction =
-        getTransactionService().getTransactionById(transactionId);
+        getGlobalTransactionService().getTransactionById(transactionId);
       if (!originalTransaction) {
         set({
           error: "Transaction not found",
@@ -189,15 +195,16 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
         return false;
       }
 
-      const updatedTransaction = getTransactionService().updateTransaction(
-        transactionId,
-        updateData
-      );
+      const updatedTransaction =
+        getGlobalTransactionService().updateTransaction(
+          transactionId,
+          updateData
+        );
 
       if (updatedTransaction) {
         // Update wallet amount if amount or type changed
         if (updateData.amount !== undefined || updateData.type !== undefined) {
-          const wallet = getWalletService().getWalletById(
+          const wallet = getGlobalWalletService().getWalletById(
             updatedTransaction.walletId
           );
           if (wallet) {
@@ -214,7 +221,7 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
                 : -updatedTransaction.amount;
 
             const newAmount = wallet.amount + originalEffect + newEffect;
-            getWalletService().updateWalletAmount(
+            getGlobalWalletService().updateWalletAmount(
               updatedTransaction.walletId,
               newAmount
             );
@@ -257,7 +264,7 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
     try {
       // Get the transaction to reverse its effect on wallet
       const transaction =
-        getTransactionService().getTransactionById(transactionId);
+        getGlobalTransactionService().getTransactionById(transactionId);
       if (!transaction) {
         set({
           error: "Transaction not found",
@@ -266,11 +273,14 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
         return false;
       }
 
-      const success = getTransactionService().deleteTransaction(transactionId);
+      const success =
+        getGlobalTransactionService().deleteTransaction(transactionId);
 
       if (success) {
         // Reverse the transaction effect on wallet
-        const wallet = getWalletService().getWalletById(transaction.walletId);
+        const wallet = getGlobalWalletService().getWalletById(
+          transaction.walletId
+        );
         if (wallet) {
           const amountToReverse =
             transaction.type === "income"
@@ -278,7 +288,7 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
               : transaction.amount;
 
           const newAmount = wallet.amount + amountToReverse;
-          getWalletService().updateWalletAmount(
+          getGlobalWalletService().updateWalletAmount(
             transaction.walletId,
             newAmount
           );
