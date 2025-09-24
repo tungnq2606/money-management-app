@@ -6,6 +6,7 @@ export class Budget extends Realm.Object<Budget> {
   name!: string;
   walletId!: string[];
   categoryId!: string;
+  userId!: string;
   amount!: number;
   remain!: number;
   loop!: boolean;
@@ -23,6 +24,7 @@ export class Budget extends Realm.Object<Budget> {
       name: "string",
       walletId: "string[]",
       categoryId: "string",
+      userId: "string",
       amount: "double",
       remain: { type: "double" as const, default: 0 },
       loop: { type: "bool" as const, default: false },

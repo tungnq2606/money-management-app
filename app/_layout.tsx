@@ -6,12 +6,11 @@ import {
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import "react-native-reanimated";
 
-import { DatabaseProvider } from "@/components/DatabaseProvider";
-import { useColorScheme } from "@/hooks/useColorScheme";
+import { DatabaseProvider } from "../components/DatabaseProvider";
+import { useColorScheme } from "../hooks/useColorScheme";
 
 function LoadingScreen() {
   return (
@@ -29,6 +28,9 @@ function AuthNavigator() {
       <Stack.Screen name="signin" />
       <Stack.Screen name="signup" />
       <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="budgetDetail" />
+      <Stack.Screen name="budgetForm" />
+      <Stack.Screen name="notification" />
       <Stack.Screen name="+not-found" />
     </Stack>
   );

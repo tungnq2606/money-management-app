@@ -1,5 +1,6 @@
+import { months } from "@/constants";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   FlatList,
   Modal,
@@ -21,25 +22,6 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({
 }) => {
   const [selectedMonth, setSelectedMonth] = useState(initialMonth);
   const [isMonthModalVisible, setIsMonthModalVisible] = useState(false);
-
-  // Memoize months array to prevent recreation on every render
-  const months = useMemo(
-    () => [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ],
-    []
-  );
 
   // Memoize close handler to prevent recreation
   const handleModalClose = useCallback(() => {

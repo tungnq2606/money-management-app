@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -7,10 +7,11 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import DateInput from "../components/DateInput";
+import FormInput from "../components/FormInput";
 import { useAuthStore } from "../stores/authStore";
 
 export default function SignUpScreen() {
@@ -102,93 +103,82 @@ export default function SignUpScreen() {
         </View>
 
         <View style={styles.form}>
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Full Name</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your full name"
-              value={name}
-              onChangeText={setName}
-              autoCapitalize="words"
-              autoCorrect={false}
-            />
-          </View>
+          <FormInput
+            label="Full Name"
+            placeholder="Enter your full name"
+            value={name}
+            onChangeText={setName}
+            autoCapitalize="words"
+            autoCorrect={false}
+            containerStyle={styles.inputContainer}
+          />
 
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Email</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-          </View>
+          <FormInput
+            label="Email"
+            placeholder="Enter your email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            containerStyle={styles.inputContainer}
+          />
 
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your password (min 6 characters)"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-          </View>
+          <FormInput
+            label="Password"
+            placeholder="Enter your password (min 6 characters)"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
+            containerStyle={styles.inputContainer}
+          />
 
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Confirm Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Confirm your password"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-          </View>
+          <FormInput
+            label="Confirm Password"
+            placeholder="Confirm your password"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
+            containerStyle={styles.inputContainer}
+          />
 
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Birthday</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="YYYY-MM-DD"
-              value={birthday}
-              onChangeText={setBirthday}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-          </View>
+          <DateInput
+            label="Birthday"
+            value={birthday || null}
+            maximumDate={new Date()}
+            onChange={(date) => {
+              const year = date.getFullYear();
+              const month = String(date.getMonth() + 1).padStart(2, "0");
+              const day = String(date.getDate()).padStart(2, "0");
+              setBirthday(`${year}-${month}-${day}`);
+            }}
+            containerStyle={styles.inputContainer}
+          />
 
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Phone Number</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your phone number"
-              value={phoneNumber}
-              onChangeText={setPhoneNumber}
-              keyboardType="phone-pad"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-          </View>
+          <FormInput
+            label="Phone Number"
+            placeholder="Enter your phone number"
+            value={phoneNumber}
+            onChangeText={setPhoneNumber}
+            keyboardType="phone-pad"
+            autoCapitalize="none"
+            autoCorrect={false}
+            containerStyle={styles.inputContainer}
+          />
 
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Address</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your address"
-              value={address}
-              onChangeText={setAddress}
-              autoCapitalize="words"
-              autoCorrect={false}
-            />
-          </View>
+          <FormInput
+            label="Address"
+            placeholder="Enter your address"
+            value={address}
+            onChangeText={setAddress}
+            autoCapitalize="words"
+            autoCorrect={false}
+            containerStyle={styles.inputContainer}
+          />
 
           <TouchableOpacity
             style={[styles.signUpButton, isLoading && styles.buttonDisabled]}

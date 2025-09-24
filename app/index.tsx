@@ -1,7 +1,7 @@
-import { useAuthStore } from "@/stores/authStore";
 import { router } from "expo-router";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { useAuthStore } from "../stores/authStore";
 
 export default function IndexScreen() {
   const { isAuthenticated, isLoading, user } = useAuthStore();

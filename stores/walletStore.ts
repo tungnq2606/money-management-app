@@ -22,6 +22,7 @@ interface WalletActions {
   selectWallet: (wallet: Wallet | null) => void;
   updateWalletAmount: (walletId: string, amount: number) => Promise<boolean>;
   clearError: () => void;
+  walletById: (walletId: string) => Wallet | null;
 }
 
 type WalletStore = WalletState & WalletActions;
@@ -39,8 +40,20 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      const wallets = getGlobalWalletService().getWalletsByUserId(userId);
+      const walletsRealm = getGlobalWalletService().getWalletsByUserId(userId);
+      const wallets = walletsRealm.map((item) => ({
+        _id: String(item._id),
+        name: item.name,
+        type: item.type,
+        amount: item.amount,
+        toDate: item.toDate,
+        fromDate: item.fromDate,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+      }));
+
       const totalAmount = getGlobalWalletService().getTotalWalletAmount(userId);
+
       set({
         wallets,
         totalAmount,
@@ -164,6 +177,7 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
 
       if (success) {
         const { wallets, selectedWallet } = get();
+
         const updatedWallets = wallets.filter(
           (w) => w._id.toString() !== walletId
         );
@@ -199,5 +213,10 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
 
   clearError: () => {
     set({ error: null });
+  },
+  walletById: (walletId: string): Wallet | null => {
+    const { wallets } = get();
+    const wallet = wallets.find((w) => w._id.toString() === walletId);
+    return wallet || null;
   },
 }));

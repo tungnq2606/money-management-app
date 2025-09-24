@@ -1,6 +1,7 @@
 import AntDesign from "@expo/vector-icons/AntDesign";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { formatMoney } from "@/constants/formatMoney";
 
 interface TransactionItemProps {
   id: string;
@@ -37,7 +38,9 @@ const TransactionItem: React.FC<TransactionItemProps> = ({
         <Text
           style={[styles.amount, isIncome ? styles.income : styles.expense]}
         >
-          {isIncome ? `+ $${amount}` : `- $${Math.abs(amount)}`}
+          {isIncome
+            ? `+ ${formatMoney(amount)}`
+            : `- ${formatMoney(Math.abs(amount))}`}
         </Text>
         <Text style={styles.time}>{time}</Text>
       </View>

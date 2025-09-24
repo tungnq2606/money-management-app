@@ -4,7 +4,7 @@ import { useAuthStore } from "@/stores/authStore";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
 import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Animated,
   Image,

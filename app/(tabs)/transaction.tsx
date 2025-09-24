@@ -1,68 +1,99 @@
 import HeaderApp from "@/components/HeaderApp";
 import TransactionItem from "@/components/TransactionItem";
-import React from "react";
+import { getGlobalCategoryService } from "@/database/services";
+import { useTransactionStore } from "@/stores/transactionStore";
+import { useEffect, useMemo, useState } from "react";
 import { SectionList, StyleSheet, Text, View } from "react-native";
 
-const DATA = [
-  {
-    title: "Today",
-    data: [
-      {
-        id: "1",
-        type: "Shopping",
-        description: "Buy some grocery",
-        amount: -120,
-        time: "10:00 AM",
-        icon: "shoppingcart",
-        color: "#FDC65C",
-      },
-      {
-        id: "2",
-        type: "Subscription",
-        description: "Disney+ Annual..",
-        amount: -80,
-        time: "03:30 PM",
-        icon: "profile",
-        color: "#D6B2FF",
-      },
-      {
-        id: "3",
-        type: "Food",
-        description: "Buy a ramen",
-        amount: -32,
-        time: "07:30 PM",
-        icon: "rest",
-        color: "#FFB1B1",
-      },
-    ],
-  },
-  {
-    title: "Yesterday",
-    data: [
-      {
-        id: "4",
-        type: "Salary",
-        description: "Salary for July",
-        amount: 5000,
-        time: "04:30 PM",
-        icon: "creditcard",
-        color: "#B7F4C3",
-      },
-      {
-        id: "5",
-        type: "Transportation",
-        description: "Charging Tesla",
-        amount: -18,
-        time: "08:30 PM",
-        icon: "car",
-        color: "#B6D9FF",
-      },
-    ],
-  },
-];
+type SectionItem = {
+  id: string;
+  type: string;
+  description: string;
+  amount: number;
+  time: string;
+  icon: string;
+  color: string;
+};
+
+type SectionData = { title: string; data: SectionItem[] };
+
+function isSameDay(a: Date, b: Date) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+function formatTime(date: Date): string {
+  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+function getIconAndColorByType(type: "income" | "expense") {
+  if (type === "income") return { icon: "creditcard", color: "#B7F4C3" };
+  return { icon: "shoppingcart", color: "#FFD8A8" };
+}
 
 export default function TransactionScreen() {
-  const _renderItem = ({ item }: any) => {
+  const { transactions, loadTransactionsWithFilters, isLoading } =
+    useTransactionStore();
+  const [categoryNameById, setCategoryNameById] = useState<Map<string, string>>(
+    new Map()
+  );
+
+  useEffect(() => {
+    loadTransactionsWithFilters({});
+    const categories = getGlobalCategoryService().getAllCategories();
+    const map = new Map<string, string>();
+    categories.forEach((c) => map.set(c._id.toString(), c.name));
+    setCategoryNameById(map);
+  }, [loadTransactionsWithFilters]);
+
+  const sections: SectionData[] = useMemo(() => {
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+
+    const todayItems: SectionItem[] = [];
+    const yesterdayItems: SectionItem[] = [];
+    const earlierItems: SectionItem[] = [];
+
+    transactions.forEach((t) => {
+      const createdAt = new Date(t.createdAt);
+      const title =
+        categoryNameById.get(t.categoryId) ||
+        (t.type === "income" ? "Income" : "Expense");
+      const { icon, color } = getIconAndColorByType(t.type);
+      const item: SectionItem = {
+        id: t._id.toString(),
+        type: title,
+        description: t.note || "",
+        amount: t.type === "income" ? t.amount : -t.amount,
+        time: formatTime(createdAt),
+        icon,
+        color,
+      };
+
+      if (isSameDay(createdAt, today)) {
+        todayItems.push(item);
+      } else if (isSameDay(createdAt, yesterday)) {
+        yesterdayItems.push(item);
+      } else {
+        earlierItems.push(item);
+      }
+    });
+
+    const sectionsBuilt: SectionData[] = [];
+    if (todayItems.length)
+      sectionsBuilt.push({ title: "Today", data: todayItems });
+    if (yesterdayItems.length)
+      sectionsBuilt.push({ title: "Yesterday", data: yesterdayItems });
+    if (earlierItems.length)
+      sectionsBuilt.push({ title: "Earlier", data: earlierItems });
+    return sectionsBuilt;
+  }, [transactions, categoryNameById]);
+
+  const _renderItem = ({ item }: { item: SectionItem }) => {
     return (
       <TransactionItem
         id={item.id}
@@ -85,11 +116,20 @@ export default function TransactionScreen() {
       <HeaderApp title={"Transactions"} />
 
       <SectionList
-        sections={DATA}
+        sections={sections}
         keyExtractor={(item) => item.id}
         renderItem={_renderItem}
         renderSectionHeader={renderSectionHeader}
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={{ flex: 1, flexGrow: 1, padding: 16 }}
+        refreshing={isLoading}
+        onRefresh={() => loadTransactionsWithFilters({})}
+        ListEmptyComponent={
+          !isLoading ? (
+            <View style={styles.emptyWrap}>
+              <Text style={styles.emptyText}>No data</Text>
+            </View>
+          ) : null
+        }
       />
     </View>
   );
@@ -104,5 +144,14 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 8,
     marginTop: 16,
+  },
+  emptyWrap: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#8f8e8eff",
   },
 });
