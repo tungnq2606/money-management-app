@@ -1,6 +1,7 @@
+import { formatNumber } from "@/constants/formatMoney";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   ScrollView,
@@ -12,46 +13,91 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import TransactionForm from "../components/TransactionForm";
+import {
+  getGlobalCategoryService,
+  getGlobalWalletService,
+} from "../database/services";
+import { useAuthStore } from "../stores/authStore";
+import { useTransactionStore } from "../stores/transactionStore";
 
 const AddTransactionScreen = () => {
   const { type } = useLocalSearchParams<{ type: "income" | "expense" }>();
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("");
-  const [wallet, setWallet] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [walletId, setWalletId] = useState("");
   const [imageUri, setImageUri] = useState<string | null>(null);
+
+  const user = useAuthStore((s) => s.user);
+  const createTransaction = useTransactionStore((s) => s.createTransaction);
+  const [categoryOptions, setCategoryOptions] = useState<
+    { id: string; name: string }[]
+  >([]);
+  const [walletOptions, setWalletOptions] = useState<
+    { id: string; name: string }[]
+  >([]);
 
   const isIncome = type === "income";
   const headerColor = isIncome ? "#00A86B" : "#FD3C4A";
   const buttonColor = isIncome ? "#00A86B" : "#FD3C4A";
 
-  const handleSave = () => {
-    if (!amount || !description || !category || !wallet) {
-      Alert.alert("Error", "Please fill in all required fields");
+  useEffect(() => {
+    if (!user) return;
+    // Load categories by user and type
+    const categories = getGlobalCategoryService()
+      .getCategoriesByType(user._id.toString(), isIncome ? "income" : "expense")
+      .map((c) => ({ id: c._id.toString(), name: c.name }));
+    setCategoryOptions(categories);
+
+    const wallets = getGlobalWalletService()
+      .getWalletsByUserId(user._id.toString())
+      .map((w) => ({ id: w._id.toString(), name: w.name }));
+    setWalletOptions(wallets);
+
+    // Preselect first options if available
+    if (!categoryId && categories.length > 0) setCategoryId(categories[0].id);
+    if (!walletId && wallets.length > 0) setWalletId(wallets[0].id);
+  }, [user, isIncome, categoryId, walletId]);
+
+  const handleSave = async () => {
+    if (!user) {
+      Alert.alert("Error", "Bạn cần đăng nhập để thêm giao dịch");
       return;
     }
 
-    // Here you would typically save to your database
-    console.log({
-      type,
-      amount: parseFloat(amount),
-      description,
-      category,
-      wallet,
-      imageUri,
-      timestamp: new Date().toISOString(),
-    });
+    if (!amount || !description || !categoryId || !walletId) {
+      Alert.alert("Error", "Vui lòng điền đầy đủ thông tin");
+      return;
+    }
 
-    Alert.alert(
-      "Success",
-      `${isIncome ? "Income" : "Expense"} added successfully!`,
-      [
-        {
-          text: "OK",
-          onPress: () => router.back(),
-        },
-      ]
-    );
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      Alert.alert("Error", "Số tiền không hợp lệ");
+      return;
+    }
+
+    try {
+      const ok = await createTransaction({
+        walletId,
+        categoryId,
+        amount: parsedAmount,
+        type: isIncome ? "income" : "expense",
+        note: description,
+      });
+
+      if (ok) {
+        Alert.alert(
+          "Thành công",
+          `${isIncome ? "Thu nhập" : "Chi tiêu"} đã được thêm!`,
+          [{ text: "OK", onPress: () => router.back() }]
+        );
+      } else {
+        Alert.alert("Error", "Không thể tạo giao dịch");
+      }
+    } catch (e) {
+      console.error(e);
+      Alert.alert("Error", "Đã xảy ra lỗi khi tạo giao dịch");
+    }
   };
 
   const handleCancel = () => {
@@ -85,7 +131,11 @@ const AddTransactionScreen = () => {
               <TextInput
                 style={styles.amountInput}
                 value={amount}
-                onChangeText={setAmount}
+                onChangeText={(text) => {
+                  const digits = text.replace(/[^\d]/g, "");
+                  const formatted = digits ? formatNumber(Number(digits)) : "";
+                  setAmount(formatted);
+                }}
                 placeholder="0"
                 keyboardType="numeric"
                 placeholderTextColor="rgba(255, 255, 255, 0.7)"
@@ -96,17 +146,19 @@ const AddTransactionScreen = () => {
 
         {/* Form */}
         <TransactionForm
-          category={category}
-          setCategory={setCategory}
+          categoryId={categoryId}
+          setCategoryId={setCategoryId}
           description={description}
           setDescription={setDescription}
-          wallet={wallet}
-          setWallet={setWallet}
+          walletId={walletId}
+          setWalletId={setWalletId}
           imageUri={imageUri}
           setImageUri={setImageUri}
           isIncome={isIncome}
           buttonColor={buttonColor}
           onSave={handleSave}
+          categoryOptions={categoryOptions}
+          walletOptions={walletOptions}
         />
       </SafeAreaView>
     </ScrollView>

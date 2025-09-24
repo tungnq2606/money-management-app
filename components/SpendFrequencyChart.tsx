@@ -11,30 +11,31 @@ import { LineChart } from "react-native-gifted-charts";
 interface SpendFrequencyChartProps {
   data?: { value: number }[];
   title?: string;
+  selectedPeriod?: string;
+  onChangePeriod?: (period: string) => void;
 }
 
 const SpendFrequencyChart: React.FC<SpendFrequencyChartProps> = ({
-  data = [
-    { value: 500 },
-    { value: 800 },
-    { value: 600 },
-    { value: 1200 },
-    { value: 900 },
-    { value: 1500 },
-    { value: 1100 },
-    { value: 1800 },
-    { value: 1300 },
-    { value: 2000 },
-  ],
+  data = [],
   title = "Spend Frequency",
+  selectedPeriod: controlledSelectedPeriod,
+  onChangePeriod,
 }) => {
+  console.log(data);
   const { width } = useWindowDimensions();
-  const [selectedPeriod, setSelectedPeriod] = useState("Today");
+  const [uncontrolledSelectedPeriod, setUncontrolledSelectedPeriod] =
+    useState("Today");
 
   const periods = ["Today", "Week", "Month", "Year"];
 
+  const selectedPeriod = controlledSelectedPeriod ?? uncontrolledSelectedPeriod;
+
   const handlePeriodPress = (period: string) => {
-    setSelectedPeriod(period);
+    if (onChangePeriod) {
+      onChangePeriod(period);
+    } else {
+      setUncontrolledSelectedPeriod(period);
+    }
   };
 
   return (

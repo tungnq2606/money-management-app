@@ -1,10 +1,8 @@
 import { useWalletStore } from "@/stores";
-import { AntDesign, Ionicons } from "@expo/vector-icons";
-import * as ImagePicker from "expo-image-picker";
+import { AntDesign } from "@expo/vector-icons";
+// import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
 import {
-  Alert,
-  Image,
   Modal,
   StyleSheet,
   Text,
@@ -13,123 +11,106 @@ import {
   View,
 } from "react-native";
 
+interface OptionItem {
+  id: string;
+  name: string;
+}
+
 interface TransactionFormProps {
-  category: string;
-  setCategory: (value: string) => void;
+  categoryId: string;
+  setCategoryId: (value: string) => void;
   description: string;
   setDescription: (value: string) => void;
-  wallet: string;
-  setWallet: (value: string) => void;
+  walletId: string;
+  setWalletId: (value: string) => void;
   imageUri: string | null;
   setImageUri: (uri: string | null) => void;
   isIncome: boolean;
   buttonColor: string;
   onSave: () => void;
+  categoryOptions: OptionItem[];
+  walletOptions: OptionItem[];
 }
 
 const TransactionForm: React.FC<TransactionFormProps> = ({
-  category,
-  setCategory,
+  categoryId,
+  setCategoryId,
   description,
   setDescription,
-  wallet,
-  setWallet,
+  walletId,
+  setWalletId,
   imageUri,
   setImageUri,
   isIncome,
   buttonColor,
   onSave,
+  categoryOptions,
+  walletOptions,
 }) => {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showWalletModal, setShowWalletModal] = useState(false);
   const { wallets } = useWalletStore();
 
-  const incomeCategories = [
-    "Salary",
-    "Freelance",
-    "Business",
-    "Investment",
-    "Gift",
-    "Other Income",
-  ];
+  const selectedCategoryName =
+    categoryOptions.find((c) => c.id === categoryId)?.name || "";
+  const selectedWalletName =
+    walletOptions.find((w) => w.id === walletId)?.name || "";
 
-  const expenseCategories = [
-    "Food & Dining",
-    "Shopping",
-    "Transportation",
-    "Entertainment",
-    "Bills & Utilities",
-    "Healthcare",
-    "Education",
-    "Travel",
-    "Other Expense",
-  ];
+  // const pickImage = async () => {
+  //   const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  //   if (status !== "granted") {
+  //     Alert.alert(
+  //       "Permission denied",
+  //       "We need camera roll permissions to select an image."
+  //     );
+  //     return;
+  //   }
 
-  // const wallets = [
-  //   "Cash",
-  //   "Bank Account",
-  //   "Credit Card",
-  //   "Savings",
-  //   "Investment",
-  // ];
+  //   const result = await ImagePicker.launchImageLibraryAsync({
+  //     mediaTypes: ImagePicker.MediaTypeOptions.Images,
+  //     allowsEditing: true,
+  //     aspect: [4, 3],
+  //     quality: 1,
+  //   });
 
-  const categories = isIncome ? incomeCategories : expenseCategories;
+  //   if (!result.canceled) {
+  //     setImageUri(result.assets[0].uri);
+  //   }
+  // };
 
-  const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert(
-        "Permission denied",
-        "We need camera roll permissions to select an image."
-      );
-      return;
-    }
+  // const takePhoto = async () => {
+  //   const { status } = await ImagePicker.requestCameraPermissionsAsync();
+  //   if (status !== "granted") {
+  //     Alert.alert(
+  //       "Permission denied",
+  //       "We need camera permissions to take a photo."
+  //     );
+  //     return;
+  //   }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
+  //   const result = await ImagePicker.launchCameraAsync({
+  //     mediaTypes: ImagePicker.MediaTypeOptions.Images,
+  //     allowsEditing: true,
+  //     aspect: [4, 3],
+  //     quality: 1,
+  //   });
 
-    if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
-    }
-  };
+  //   if (!result.canceled) {
+  //     setImageUri(result.assets[0].uri);
+  //   }
+  // };
 
-  const takePhoto = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert(
-        "Permission denied",
-        "We need camera permissions to take a photo."
-      );
-      return;
-    }
+  // const showImagePicker = () => {
+  //   Alert.alert("Select Image", "Choose an option", [
+  //     { text: "Camera", onPress: takePhoto },
+  //     { text: "Gallery", onPress: pickImage },
+  //     { text: "Cancel", style: "cancel" },
+  //   ]);
+  // };
 
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
-    }
-  };
-
-  const showImagePicker = () => {
-    Alert.alert("Select Image", "Choose an option", [
-      { text: "Camera", onPress: takePhoto },
-      { text: "Gallery", onPress: pickImage },
-      { text: "Cancel", style: "cancel" },
-    ]);
-  };
-
-  const removeImage = () => {
-    setImageUri(null);
-  };
+  // const removeImage = () => {
+  //   setImageUri(null);
+  // };
 
   return (
     <View style={styles.container}>
@@ -142,9 +123,12 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             onPress={() => setShowCategoryModal(true)}
           >
             <Text
-              style={[styles.dropdownText, !category && styles.placeholderText]}
+              style={[
+                styles.dropdownText,
+                !categoryId && styles.placeholderText,
+              ]}
             >
-              {category || "Select category"}
+              {selectedCategoryName || "Select category"}
             </Text>
             <AntDesign name="down" size={16} color="#666" />
           </TouchableOpacity>
@@ -170,16 +154,16 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             onPress={() => setShowWalletModal(true)}
           >
             <Text
-              style={[styles.dropdownText, !wallet && styles.placeholderText]}
+              style={[styles.dropdownText, !walletId && styles.placeholderText]}
             >
-              {wallet || "Select wallet"}
+              {selectedWalletName || "Select wallet"}
             </Text>
             <AntDesign name="down" size={16} color="#666" />
           </TouchableOpacity>
         </View>
 
         {/* Attach Image */}
-        <View style={styles.inputGroup}>
+        {/* <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Attach Image</Text>
           {imageUri ? (
             <View style={styles.imageContainer}>
@@ -200,7 +184,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               <Text style={styles.attachButtonText}>Add attachment</Text>
             </TouchableOpacity>
           )}
-        </View>
+        </View> */}
       </View>
 
       {/* Save Button */}
@@ -226,16 +210,16 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 <AntDesign name="close" size={24} color="#000" />
               </TouchableOpacity>
             </View>
-            {categories.map((item, index) => (
+            {categoryOptions.map((item, index) => (
               <TouchableOpacity
                 key={index}
                 style={styles.modalItem}
                 onPress={() => {
-                  setCategory(item);
+                  setCategoryId(item.id);
                   setShowCategoryModal(false);
                 }}
               >
-                <Text style={styles.modalItemText}>{item}</Text>
+                <Text style={styles.modalItemText}>{item.name}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -257,16 +241,16 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 <AntDesign name="close" size={24} color="#000" />
               </TouchableOpacity>
             </View>
-            {wallets.map((item, index) => (
+            {walletOptions.map((item, index) => (
               <TouchableOpacity
                 key={index}
                 style={styles.modalItem}
                 onPress={() => {
-                  setWallet(item?.name);
+                  setWalletId(item.id);
                   setShowWalletModal(false);
                 }}
               >
-                <Text style={styles.modalItemText}>{item?.name}</Text>
+                <Text style={styles.modalItemText}>{item.name}</Text>
               </TouchableOpacity>
             ))}
           </View>

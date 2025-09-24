@@ -1,6 +1,7 @@
 import MonthSelector from "@/components/MonthSelector";
 import SpendFrequencyChart from "@/components/SpendFrequencyChart";
 import TransactionItem from "@/components/TransactionItem";
+import { formatMoney } from "@/constants/formatMoney";
 import { getGlobalCategoryService } from "@/database/services";
 import { useAuthStore } from "@/stores/authStore";
 import { useTransactionStore } from "@/stores/transactionStore";
@@ -40,6 +41,9 @@ const HomeScreen = () => {
     return { startDate: start, endDate: end };
   }, [selectedMonth]);
 
+  // Period selection for chart
+  const [selectedPeriod, setSelectedPeriod] = useState<string>("Month");
+
   useEffect(() => {
     if (!user) return;
     loadWallets(user._id.toString());
@@ -61,24 +65,104 @@ const HomeScreen = () => {
     return { incomeTotal: income, expenseTotal: expense };
   }, [transactions]);
 
+  console.log(transactions);
   const chartData = useMemo(() => {
-    // Build daily expense totals for the selected month
+    // Helper to ensure Date
+    const toDate = (value: Date | string): Date =>
+      value instanceof Date ? value : new Date(value);
+
+    const now = new Date();
+
+    if (selectedPeriod === "Today") {
+      const start = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        0,
+        0,
+        0,
+        0
+      );
+      const end = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        23,
+        59,
+        59,
+        999
+      );
+      const buckets = Array.from({ length: 24 }, () => 0);
+      for (const t of transactions) {
+        const d = toDate(t.createdAt);
+        if (d >= start && d <= end) {
+          const hour = d.getHours();
+          const sign = t.type === "income" ? 1 : -1;
+          buckets[hour] += sign * t.amount;
+        }
+      }
+      return buckets.map((value) => ({ value }));
+    }
+
+    if (selectedPeriod === "Week") {
+      // Last 7 days ending today
+      const end = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        23,
+        59,
+        59,
+        999
+      );
+      const start = new Date(end);
+      start.setDate(end.getDate() - 6);
+      const buckets = Array.from({ length: 7 }, () => 0);
+      for (const t of transactions) {
+        const d = toDate(t.createdAt);
+        if (d >= start && d <= end) {
+          const diffDays = Math.floor(
+            (d.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+          );
+          const index = Math.min(Math.max(diffDays, 0), 6);
+          const sign = t.type === "income" ? 1 : -1;
+          buckets[index] += sign * t.amount;
+        }
+      }
+      return buckets.map((value) => ({ value }));
+    }
+
+    if (selectedPeriod === "Year") {
+      const year = now.getFullYear();
+      const buckets = Array.from({ length: 12 }, () => 0);
+      for (const t of transactions) {
+        const d = toDate(t.createdAt);
+        if (d.getFullYear() === year) {
+          const monthIndex = d.getMonth();
+          const sign = t.type === "income" ? 1 : -1;
+          buckets[monthIndex] += sign * t.amount;
+        }
+      }
+      return buckets.map((value) => ({ value }));
+    }
+
+    // Default: Month view based on currently selected month range
     const daysInMonth = new Date(
       startDate.getFullYear(),
       startDate.getMonth() + 1,
       0
     ).getDate();
-    const daily: number[] = Array.from({ length: daysInMonth }, () => 0);
-    transactions.forEach((t) => {
-      if (t.type !== "expense") return;
-      const d = t.createdAt;
+    const buckets: number[] = Array.from({ length: daysInMonth }, () => 0);
+    for (const t of transactions) {
+      const d = toDate(t.createdAt);
       if (d >= startDate && d <= endDate) {
         const dayIndex = d.getDate() - 1;
-        daily[dayIndex] += t.amount;
+        const sign = t.type === "income" ? 1 : -1;
+        buckets[dayIndex] += sign * t.amount;
       }
-    });
-    return daily.map((value) => ({ value }));
-  }, [transactions, startDate, endDate]);
+    }
+    return buckets.map((value) => ({ value }));
+  }, [transactions, startDate, endDate, selectedPeriod]);
 
   const recentTransactions = useMemo(() => {
     const categoryService = getGlobalCategoryService();
@@ -121,9 +205,7 @@ const HomeScreen = () => {
           </TouchableOpacity>
         </View>
         <Text style={styles.accountBalanceTitle}>Account Balance</Text>
-        <Text style={styles.balanceAmount}>
-          ${totalAmount.toLocaleString()}
-        </Text>
+        <Text style={styles.balanceAmount}>{formatMoney(totalAmount)}</Text>
         <View style={styles.accountInfo}>
           <View style={[styles.accountBox, styles.incomeBox]}>
             <View style={styles.accountIconContainer}>
@@ -134,9 +216,9 @@ const HomeScreen = () => {
               />
             </View>
             <View style={styles.accountBoxContent}>
-              <Text style={styles.accountBoxText}>Expense</Text>
+              <Text style={styles.accountBoxText}>Income</Text>
               <Text style={styles.accountBoxAmount}>
-                ${expenseTotal.toLocaleString()}
+                {formatMoney(incomeTotal)}
               </Text>
             </View>
           </View>
@@ -149,14 +231,18 @@ const HomeScreen = () => {
               />
             </View>
             <View style={styles.accountBoxContent}>
-              <Text style={styles.accountBoxText}>Income</Text>
+              <Text style={styles.accountBoxText}>Expense</Text>
               <Text style={styles.accountBoxAmount}>
-                ${incomeTotal.toLocaleString()}
+                {formatMoney(expenseTotal)}
               </Text>
             </View>
           </View>
         </View>
-        <SpendFrequencyChart data={chartData} />
+        <SpendFrequencyChart
+          data={chartData}
+          selectedPeriod={selectedPeriod}
+          onChangePeriod={setSelectedPeriod}
+        />
         <View style={styles.recentTransactionsHeader}>
           <Text style={styles.recentTransactionsTitle}>
             Recent Transactions
