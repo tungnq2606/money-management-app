@@ -6,6 +6,7 @@ export interface CreateNotificationData {
   link?: string;
   time: Date;
   isRead?: boolean;
+  userId: string;
 }
 
 class NotificationService {
@@ -27,6 +28,7 @@ class NotificationService {
           isRead: notificationData.isRead || false,
           createdAt: now,
           updatedAt: now,
+          userId: notificationData.userId,
         });
       });
 
@@ -44,6 +46,34 @@ class NotificationService {
       );
     } catch (error) {
       console.error("Error getting all notifications:", error);
+      throw error;
+    }
+  }
+
+  getNotificationsByUser(userId: string): Notification[] {
+    try {
+      return Array.from(
+        this.realm
+          .objects<Notification>("Notification")
+          .filtered("userId == $0", userId)
+          .sorted("time", true)
+      );
+    } catch (error) {
+      console.error("Error getting notifications by user:", error);
+      throw error;
+    }
+  }
+
+  getUnreadNotificationsByUser(userId: string): Notification[] {
+    try {
+      return Array.from(
+        this.realm
+          .objects<Notification>("Notification")
+          .filtered("userId == $0 AND isRead == false", userId)
+          .sorted("time", true)
+      );
+    } catch (error) {
+      console.error("Error getting unread notifications by user:", error);
       throw error;
     }
   }

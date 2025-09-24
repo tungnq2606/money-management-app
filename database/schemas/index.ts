@@ -22,5 +22,5 @@ export const realmSchemas = [
 // Realm configuration
 export const realmConfig: Realm.Configuration = {
   schema: realmSchemas,
-  schemaVersion: 4,
+  schemaVersion: 5,
 };

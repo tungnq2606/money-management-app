@@ -7,10 +7,10 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import FormInput from "../components/FormInput";
 import MonthSelector from "../components/MonthSelector";
 import { formatNumber } from "../constants/formatMoney";
 import {
@@ -204,32 +204,26 @@ export default function BudgetFormScreen() {
 
       <View style={styles.contentContainer}>
         <ScrollView contentContainerStyle={styles.form}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Name</Text>
-            <TextInput
-              style={styles.input}
-              value={name}
-              onChangeText={setName}
-              placeholder="e.g. Food & Drink"
-              placeholderTextColor="#C4C4C4"
-            />
-          </View>
+          <FormInput
+            label="Name"
+            value={name}
+            onChangeText={setName}
+            placeholder="e.g. Food & Drink"
+            containerStyle={styles.inputGroup}
+          />
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Amount</Text>
-            <TextInput
-              style={styles.input}
-              value={amount}
-              onChangeText={(text) => {
-                const digits = text.replace(/[^\d]/g, "");
-                const formatted = digits ? formatNumber(Number(digits)) : "";
-                setAmount(formatted);
-              }}
-              keyboardType="numeric"
-              placeholder="e.g. 1000"
-              placeholderTextColor="#C4C4C4"
-            />
-          </View>
+          <FormInput
+            label="Amount"
+            value={amount}
+            onChangeText={(text) => {
+              const digits = text.replace(/[^\d]/g, "");
+              const formatted = digits ? formatNumber(Number(digits)) : "";
+              setAmount(formatted);
+            }}
+            keyboardType="numeric"
+            placeholder="e.g. 1000"
+            containerStyle={styles.inputGroup}
+          />
 
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Wallets</Text>
@@ -292,16 +286,13 @@ export default function BudgetFormScreen() {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Note (optional)</Text>
-            <TextInput
-              style={styles.input}
-              value={note}
-              onChangeText={setNote}
-              placeholder="Add a note"
-              placeholderTextColor="#C4C4C4"
-            />
-          </View>
+          <FormInput
+            label="Note (optional)"
+            value={note}
+            onChangeText={setNote}
+            placeholder="Add a note"
+            containerStyle={styles.inputGroup}
+          />
 
           <TouchableOpacity style={styles.saveButton} onPress={validateAndSave}>
             <Text style={styles.saveButtonText}>

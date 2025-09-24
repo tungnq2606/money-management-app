@@ -48,7 +48,9 @@ export default function HeaderApp({
         ) : (
           <View style={styles.backButton} />
         )}
-        <Text style={styles.title}>{title}</Text>
+        <View style={styles.titleContainer}>
+          <Text style={styles.title}>{title}</Text>
+        </View>
         {rightComponent ? rightComponent : <View style={styles.backButton} />}
       </View>
     </SafeAreaView>
@@ -70,8 +72,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
   },
+  titleContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   backButton: {
     padding: 4,
+    width: 40,
   },
   title: {
     fontSize: 24,

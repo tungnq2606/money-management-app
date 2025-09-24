@@ -1,31 +1,14 @@
 import { router } from "expo-router";
 import React, { useState } from "react";
-import {
-  Alert,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import DateTimePickerModal from "react-native-modal-datetime-picker";
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import DateInput from "../components/DateInput";
+import FormInput from "../components/FormInput";
 import HeaderApp from "../components/HeaderApp";
 import { useAuthStore } from "../stores";
 
 const DetailProfile: React.FC = () => {
   const { user, updateUser } = useAuthStore();
   const [value, setValue] = useState(user ? { ...user } : null);
-  const [show, setShow] = useState(false);
-
-  const formatDate = (dateInput?: string | Date) => {
-    if (!dateInput) return "";
-    const date = new Date(dateInput);
-    return date.toLocaleDateString("vi-VN", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    });
-  };
 
   const handleUpdate = () => {
     if (!value?.name?.trim()) {
@@ -65,83 +48,57 @@ const DetailProfile: React.FC = () => {
     }
   };
 
-  const showMode = () => {
-    setShow(!show);
-  };
-
   return (
     <View style={styles.container}>
       <HeaderApp title={"Profile"} isBack={true} />
 
       {/* Name */}
-      <View style={styles.viewInput}>
-        <Text style={styles.label}>Name</Text>
-        <TextInput
-          placeholder="Name"
-          style={styles.input}
-          value={value?.name}
-          onChangeText={(text) =>
-            setValue((prev) => (prev ? { ...prev, name: text } : prev))
-          }
-          placeholderTextColor="#8f8e8eff"
-        />
-      </View>
+      <FormInput
+        label="Name"
+        placeholder="Name"
+        containerStyle={styles.viewInput}
+        value={value?.name ?? ""}
+        onChangeText={(text) =>
+          setValue((prev) => (prev ? { ...prev, name: text } : prev))
+        }
+      />
 
       {/* Address */}
-      <View style={styles.viewInput}>
-        <Text style={styles.label}>Address</Text>
-        <TextInput
-          placeholder="Address"
-          style={styles.input}
-          value={value?.address}
-          onChangeText={(text) =>
-            setValue((prev) => (prev ? { ...prev, address: text } : prev))
-          }
-          placeholderTextColor="#8f8e8eff"
-        />
-      </View>
+      <FormInput
+        label="Address"
+        placeholder="Address"
+        containerStyle={styles.viewInput}
+        value={value?.address ?? ""}
+        onChangeText={(text) =>
+          setValue((prev) => (prev ? { ...prev, address: text } : prev))
+        }
+      />
 
       {/* Birthday */}
-      <View style={styles.viewInput}>
-        <Text style={styles.label}>Birthday</Text>
-        <TouchableOpacity style={styles.input} onPress={showMode}>
-          <Text
-            style={value?.birthday ? styles.inputText : styles.inputPlaceholder}
-          >
-            {value?.birthday
-              ? formatDate(value.birthday)
-              : "Select your birthday"}
-          </Text>
-        </TouchableOpacity>
-        <DateTimePickerModal
-          isVisible={show}
-          mode="date"
-          maximumDate={new Date()}
-          date={value?.birthday ? new Date(value.birthday) : new Date()}
-          onConfirm={(date) => {
-            setValue((prev) => (prev ? { ...prev, birthday: date } : prev));
-            setShow(false);
-          }}
-          onCancel={() => setShow(false)}
-        />
-      </View>
+      <DateInput
+        label="Birthday"
+        value={value?.birthday ?? null}
+        maximumDate={new Date()}
+        containerStyle={styles.viewInput}
+        inputStyle={styles.input}
+        onChange={(date) =>
+          setValue((prev) => (prev ? { ...prev, birthday: date } : prev))
+        }
+      />
 
       {/* Phone */}
-      <View style={styles.viewInput}>
-        <Text style={styles.label}>Phone</Text>
-        <TextInput
-          placeholder="Phone"
-          style={styles.input}
-          value={value?.phoneNumber?.toString()}
-          onChangeText={(text) =>
-            setValue((prev) =>
-              prev ? { ...prev, phoneNumber: Number(text) } : prev
-            )
-          }
-          placeholderTextColor="#8f8e8eff"
-          keyboardType="numeric"
-        />
-      </View>
+      <FormInput
+        label="Phone"
+        placeholder="Phone"
+        containerStyle={styles.viewInput}
+        value={value?.phoneNumber?.toString() ?? ""}
+        onChangeText={(text) =>
+          setValue((prev) =>
+            prev ? { ...prev, phoneNumber: Number(text) } : prev
+          )
+        }
+        keyboardType="numeric"
+      />
 
       {/* Update button */}
       <View style={styles.viewAdd}>

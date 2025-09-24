@@ -1,3 +1,4 @@
+import HeaderApp from "@/components/HeaderApp";
 import { formatMoney } from "@/constants/formatMoney";
 import { useAuthStore, useWalletStore } from "@/stores";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -35,13 +36,8 @@ const Wallet = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.viewHeader}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={24} color="black" />
-        </TouchableOpacity>
-        <Text style={styles.txtHeader}>Wallet</Text>
-        <View style={{ width: 24 }} />
-      </View>
+      <HeaderApp title="Wallet" isBack={true} />
+
       <View style={styles.viewBalance}>
         <Text style={styles.txtAccountBalance}>Account Balance</Text>
         <Text style={styles.txtBalance}>{formatMoney(total)}</Text>
@@ -110,6 +106,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     borderRadius: 12,
     padding: 16,
+    marginTop: 20,
   },
   txtBalance: {
     fontSize: 40,
@@ -146,7 +143,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 16,
-    marginRight: 5,
+    marginRight: 8,
   },
   viewAdd: {
     justifyContent: "center",

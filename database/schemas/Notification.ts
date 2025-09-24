@@ -9,6 +9,7 @@ export class Notification extends Realm.Object<Notification> {
   isRead!: boolean;
   createdAt!: Date;
   updatedAt!: Date;
+  userId!: string;
 
   static schema = {
     name: "Notification",
@@ -21,6 +22,7 @@ export class Notification extends Realm.Object<Notification> {
       isRead: { type: "bool" as const, default: false },
       createdAt: "date",
       updatedAt: "date",
+      userId: "string",
     },
   };
 }

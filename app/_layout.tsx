@@ -30,6 +30,7 @@ function AuthNavigator() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="budgetDetail" />
       <Stack.Screen name="budgetForm" />
+      <Stack.Screen name="notification" />
       <Stack.Screen name="+not-found" />
     </Stack>
   );
