@@ -3,9 +3,9 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { User } from "../database/schemas/User";
 import {
-  getCategoryService,
-  getUserService,
-  getWalletService,
+  getGlobalCategoryService,
+  getGlobalUserService,
+  getGlobalWalletService,
 } from "../database/services";
 import { CreateUserData, SignInData } from "../database/services/UserService";
 
@@ -41,7 +41,7 @@ export const useAuthStore = create<AuthStore>()(
 
         try {
           const signInData: SignInData = { email, password };
-          const user = await getUserService().signIn(signInData);
+          const user = await getGlobalUserService().signIn(signInData);
 
           if (user) {
             set({
@@ -73,7 +73,9 @@ export const useAuthStore = create<AuthStore>()(
 
         try {
           // Check if user already exists
-          const existingUser = getUserService().getUserByEmail(userData.email);
+          const existingUser = getGlobalUserService().getUserByEmail(
+            userData.email
+          );
           if (existingUser) {
             set({
               error: "User with this email already exists",
@@ -83,17 +85,19 @@ export const useAuthStore = create<AuthStore>()(
           }
 
           // Create new user
-          const user = await getUserService().createUser(userData);
+          const user = await getGlobalUserService().createUser(userData);
 
           // Create default categories for the new user
-          getCategoryService().createDefaultCategories(user._id.toString());
+          getGlobalCategoryService().createDefaultCategories(
+            user._id.toString()
+          );
 
           // Create a default wallet for the new user
           const currentDate = new Date();
           const nextYear = new Date();
           nextYear.setFullYear(currentDate.getFullYear() + 1);
 
-          getWalletService().createWallet({
+          getGlobalWalletService().createWallet({
             userId: user._id.toString(),
             name: "My Wallet",
             type: "cash",
@@ -140,7 +144,7 @@ export const useAuthStore = create<AuthStore>()(
         set({ isLoading: true, error: null });
 
         try {
-          const updatedUser = getUserService().updateUser(
+          const updatedUser = getGlobalUserService().updateUser(
             user._id.toString(),
             userData
           );

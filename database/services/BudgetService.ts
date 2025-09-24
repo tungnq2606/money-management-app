@@ -1,6 +1,5 @@
 import Realm from "realm";
 import { Budget } from "../schemas/Budget";
-import RealmService from "./RealmService";
 
 export interface CreateBudgetData {
   name: string;
@@ -17,8 +16,8 @@ export interface CreateBudgetData {
 class BudgetService {
   private realm: Realm;
 
-  constructor() {
-    this.realm = RealmService.getInstance().getRealm();
+  constructor(realm: Realm) {
+    this.realm = realm;
   }
 
   createBudget(budgetData: CreateBudgetData): Budget {

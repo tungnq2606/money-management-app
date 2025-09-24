@@ -1,7 +1,6 @@
 import * as Crypto from "expo-crypto";
 import Realm from "realm";
 import { User } from "../schemas/User";
-import RealmService from "./RealmService";
 
 export interface CreateUserData {
   name: string;
@@ -20,8 +19,8 @@ export interface SignInData {
 class UserService {
   private realm: Realm;
 
-  constructor() {
-    this.realm = RealmService.getInstance().getRealm();
+  constructor(realm: Realm) {
+    this.realm = realm;
   }
 
   async createUser(userData: CreateUserData): Promise<User> {
@@ -29,7 +28,7 @@ class UserService {
       // Hash password before storing
       const hashedPassword = await Crypto.digestStringAsync(
         Crypto.CryptoDigestAlgorithm.SHA256,
-        userData.password
+        userData.password || ""
       );
 
       const now = new Date();

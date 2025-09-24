@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { Wallet } from "../database/schemas/Wallet";
-import { getWalletService } from "../database/services";
+import { getGlobalWalletService } from "../database/services";
 import { CreateWalletData } from "../database/services/WalletService";
 
 interface WalletState {
@@ -39,8 +39,8 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      const wallets = getWalletService().getWalletsByUserId(userId);
-      const totalAmount = getWalletService().getTotalWalletAmount(userId);
+      const wallets = getGlobalWalletService().getWalletsByUserId(userId);
+      const totalAmount = getGlobalWalletService().getTotalWalletAmount(userId);
       set({
         wallets,
         totalAmount,
@@ -60,7 +60,7 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      const wallet = getWalletService().createWallet(walletData);
+      const wallet = getGlobalWalletService().createWallet(walletData);
       const { wallets } = get();
 
       set({
@@ -86,7 +86,7 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      const updatedWallet = getWalletService().updateWallet(
+      const updatedWallet = getGlobalWalletService().updateWallet(
         walletId,
         updateData
       );
@@ -129,7 +129,7 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
     amount: number
   ): Promise<boolean> => {
     try {
-      const updatedWallet = getWalletService().updateWalletAmount(
+      const updatedWallet = getGlobalWalletService().updateWalletAmount(
         walletId,
         amount
       );
@@ -160,7 +160,7 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      const success = getWalletService().deleteWallet(walletId);
+      const success = getGlobalWalletService().deleteWallet(walletId);
 
       if (success) {
         const { wallets, selectedWallet } = get();

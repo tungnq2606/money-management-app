@@ -1,97 +1,100 @@
+import { useRealm } from "@realm/react";
+import Realm from "realm";
+import { realmConfig } from "../schemas";
 import BudgetService from "./BudgetService";
 import CategoryService from "./CategoryService";
 import NotificationService from "./NotificationService";
-import RealmService from "./RealmService";
 import TransactionService from "./TransactionService";
 import UserService from "./UserService";
 import WalletService from "./WalletService";
 
-// Initialize database service
-let isInitialized = false;
-let serviceInstances: {
-  userService?: UserService;
-  walletService?: WalletService;
-  categoryService?: CategoryService;
-  transactionService?: TransactionService;
-  budgetService?: BudgetService;
-  notificationService?: NotificationService;
-} = {};
+// Hook to get all services with realm instance
+export const useServices = () => {
+  const realm = useRealm();
 
-export const initializeDatabase = async (): Promise<void> => {
-  if (isInitialized) return;
-
-  try {
-    await RealmService.getInstance().initialize();
-
-    // Initialize services after database is ready
-    serviceInstances.userService = new UserService();
-    serviceInstances.walletService = new WalletService();
-    serviceInstances.categoryService = new CategoryService();
-    serviceInstances.transactionService = new TransactionService();
-    serviceInstances.budgetService = new BudgetService();
-    serviceInstances.notificationService = new NotificationService();
-
-    isInitialized = true;
-    console.log("Database initialized successfully");
-  } catch (error) {
-    console.error("Failed to initialize database:", error);
-    throw error;
-  }
+  return {
+    userService: new UserService(realm),
+    walletService: new WalletService(realm),
+    categoryService: new CategoryService(realm),
+    transactionService: new TransactionService(realm),
+    budgetService: new BudgetService(realm),
+    notificationService: new NotificationService(realm),
+  };
 };
 
-// Export service getters that ensure initialization
-export const getUserService = (): UserService => {
-  if (!isInitialized || !serviceInstances.userService) {
-    throw new Error(
-      "Database not initialized. Call initializeDatabase() first."
-    );
-  }
-  return serviceInstances.userService;
+// Individual service hooks for convenience
+export const useUserService = () => {
+  const realm = useRealm();
+  return new UserService(realm);
 };
 
-export const getWalletService = (): WalletService => {
-  if (!isInitialized || !serviceInstances.walletService) {
-    throw new Error(
-      "Database not initialized. Call initializeDatabase() first."
-    );
-  }
-  return serviceInstances.walletService;
+export const useWalletService = () => {
+  const realm = useRealm();
+  return new WalletService(realm);
 };
 
-export const getCategoryService = (): CategoryService => {
-  if (!isInitialized || !serviceInstances.categoryService) {
-    throw new Error(
-      "Database not initialized. Call initializeDatabase() first."
-    );
-  }
-  return serviceInstances.categoryService;
+export const useCategoryService = () => {
+  const realm = useRealm();
+  return new CategoryService(realm);
 };
 
-export const getTransactionService = (): TransactionService => {
-  if (!isInitialized || !serviceInstances.transactionService) {
-    throw new Error(
-      "Database not initialized. Call initializeDatabase() first."
-    );
-  }
-  return serviceInstances.transactionService;
+export const useTransactionService = () => {
+  const realm = useRealm();
+  return new TransactionService(realm);
 };
 
-export const getBudgetService = (): BudgetService => {
-  if (!isInitialized || !serviceInstances.budgetService) {
-    throw new Error(
-      "Database not initialized. Call initializeDatabase() first."
-    );
-  }
-  return serviceInstances.budgetService;
+export const useBudgetService = () => {
+  const realm = useRealm();
+  return new BudgetService(realm);
 };
 
-export const getNotificationService = (): NotificationService => {
-  if (!isInitialized || !serviceInstances.notificationService) {
-    throw new Error(
-      "Database not initialized. Call initializeDatabase() first."
-    );
+export const useNotificationService = () => {
+  const realm = useRealm();
+  return new NotificationService(realm);
+};
+
+// Global realm instance for stores (simple approach)
+let globalRealm: Realm | null = null;
+
+// Initialize global realm
+export const initializeGlobalRealm = () => {
+  if (!globalRealm) {
+    globalRealm = new Realm(realmConfig);
   }
-  return serviceInstances.notificationService;
+  return globalRealm;
+};
+
+// Get global realm instance
+const getGlobalRealm = (): Realm => {
+  if (!globalRealm) {
+    globalRealm = initializeGlobalRealm();
+  }
+  return globalRealm;
+};
+
+// Global service getters that use the global realm
+export const getGlobalUserService = (): UserService => {
+  return new UserService(getGlobalRealm());
+};
+
+export const getGlobalWalletService = (): WalletService => {
+  return new WalletService(getGlobalRealm());
+};
+
+export const getGlobalCategoryService = (): CategoryService => {
+  return new CategoryService(getGlobalRealm());
+};
+
+export const getGlobalTransactionService = (): TransactionService => {
+  return new TransactionService(getGlobalRealm());
+};
+
+export const getGlobalBudgetService = (): BudgetService => {
+  return new BudgetService(getGlobalRealm());
+};
+
+export const getGlobalNotificationService = (): NotificationService => {
+  return new NotificationService(getGlobalRealm());
 };
 
 // Export service classes for type checking
@@ -99,21 +102,15 @@ export {
   BudgetService,
   CategoryService,
   NotificationService,
-  RealmService,
   TransactionService,
   UserService,
   WalletService,
 };
 
 // Export types
-export type { CreateUserData, SignInData } from "./UserService";
-
-export type { CreateWalletData } from "./WalletService";
-
-export type { CreateCategoryData } from "./CategoryService";
-
-export type { CreateTransactionData } from "./TransactionService";
-
 export type { CreateBudgetData } from "./BudgetService";
-
+export type { CreateCategoryData } from "./CategoryService";
 export type { CreateNotificationData } from "./NotificationService";
+export type { CreateTransactionData } from "./TransactionService";
+export type { CreateUserData, SignInData } from "./UserService";
+export type { CreateWalletData } from "./WalletService";

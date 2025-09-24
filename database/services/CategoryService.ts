@@ -1,6 +1,5 @@
 import Realm from "realm";
 import { Category } from "../schemas/Category";
-import RealmService from "./RealmService";
 
 export interface CreateCategoryData {
   name: string;
@@ -12,8 +11,8 @@ export interface CreateCategoryData {
 class CategoryService {
   private realm: Realm;
 
-  constructor() {
-    this.realm = RealmService.getInstance().getRealm();
+  constructor(realm: Realm) {
+    this.realm = realm;
   }
 
   createCategory(categoryData: CreateCategoryData): Category {
