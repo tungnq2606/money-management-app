@@ -21,6 +21,7 @@ interface WalletItem {
   id?: number;
   name: string;
   amount: number;
+  type: string;
 }
 
 const Wallet = () => {
@@ -77,7 +78,23 @@ const Wallet = () => {
     >
       <View style={styles.viewName}>
         <View style={styles.viewIcon}>
-          <Ionicons name="wallet" size={24} color="#7F3DFF" />
+          <Ionicons
+            name={
+              item?.type === "ewallet"
+                ? "phone-portrait-outline"
+                : item?.type === "bank"
+                ? "business-outline"
+                : "cash-outline"
+            }
+            size={24}
+            color={
+              item?.type === "ewallet"
+                ? "#3B82F6"
+                : item?.type === "bank"
+                ? "#10B981"
+                : "#7F3DFF"
+            }
+          />
         </View>
         <Text style={styles.txtName}>{item?.name}</Text>
       </View>
@@ -199,11 +216,6 @@ const styles = StyleSheet.create({
     padding: 16,
     marginTop: 20,
   },
-  txtBalance: {
-    fontSize: 40,
-    fontWeight: "bold",
-    color: "#000",
-  },
   txtAccountBalance: {
     fontSize: 14,
     color: "#6B7280",
@@ -228,15 +240,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
     elevation: 1,
-  },
-  viewName: { flexDirection: "row", alignItems: "center" },
-  viewIcon: {
-    backgroundColor: "#EEE5FF",
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 10,
-    marginRight: 10,
   },
   txtName: {
     fontSize: 16,
