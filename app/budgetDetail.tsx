@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
@@ -10,8 +11,24 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { formatMoney, formatNumber } from "../constants/formatMoney";
-import { getBudgetService, getCategoryService } from "../database/services";
+import HeaderApp from "../components/HeaderApp";
+import { formatMoney } from "../constants/formatMoney";
+import {
+  getGlobalBudgetService,
+  getGlobalCategoryService,
+} from "../database/services";
+
+type BudgetView = {
+  id: string;
+  name: string;
+  amount: number;
+  remain: number;
+  categoryId: string;
+  fromDate: Date;
+  toDate: Date;
+  note: string;
+  loop: boolean;
+};
 
 export default function BudgetDetail() {
   const params = useLocalSearchParams<{ id?: string }>();
@@ -19,17 +36,7 @@ export default function BudgetDetail() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [budget, setBudget] = useState<{
-    id: string;
-    name: string;
-    amount: number;
-    remain: number;
-    categoryId: string;
-    fromDate: Date;
-    toDate: Date;
-    note: string;
-    loop: boolean;
-  } | null>(null);
+  const [budget, setBudget] = useState<BudgetView | null>(null);
   const [categoryName, setCategoryName] = useState<string>("");
   const [deleteVisible, setDeleteVisible] = useState(false);
 
@@ -41,7 +48,7 @@ export default function BudgetDetail() {
         return;
       }
 
-      const found = getBudgetService().getBudgetById(budgetId);
+      const found = getGlobalBudgetService().getBudgetById(budgetId);
       if (!found) {
         setError("Budget not found");
         setLoading(false);
@@ -60,7 +67,9 @@ export default function BudgetDetail() {
         loop: found.loop,
       });
 
-      const category = getCategoryService().getCategoryById(found.categoryId);
+      const category = getGlobalCategoryService().getCategoryById(
+        found.categoryId
+      );
       if (category) setCategoryName(category.name);
       setLoading(false);
     } catch (e) {
@@ -74,11 +83,17 @@ export default function BudgetDetail() {
     () => (budget ? budget.remain <= 0 : false),
     [budget]
   );
-  const progress = useMemo(() => {
+  const spent = useMemo(() => {
     if (!budget) return 0;
-    if (budget.amount <= 0) return 0;
-    const spent = Math.max(0, budget.amount - budget.remain);
+    return Math.max(0, budget.amount - budget.remain);
+  }, [budget]);
+  const progress = useMemo(() => {
+    if (!budget || budget.amount <= 0) return 0;
     return Math.min(1, spent / budget.amount);
+  }, [budget, spent]);
+  const periodText = useMemo(() => {
+    if (!budget) return "";
+    return `${budget.fromDate.toDateString()} - ${budget.toDate.toDateString()}`;
   }, [budget]);
 
   const confirmDelete = () => {
@@ -89,7 +104,7 @@ export default function BudgetDetail() {
   const onDelete = () => {
     if (!budget) return;
     try {
-      getBudgetService().deleteBudget(budget.id);
+      getGlobalBudgetService().deleteBudget(budget.id);
       setDeleteVisible(false);
       router.back();
     } catch (e) {
@@ -125,15 +140,15 @@ export default function BudgetDetail() {
 
   return (
     <View style={styles.safeArea}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={8}>
-          <AntDesign name="left" size={18} color="#ffffff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Detail Budget</Text>
-        <TouchableOpacity onPress={confirmDelete} hitSlop={8}>
-          <AntDesign name="delete" size={18} color="#ffffff" />
-        </TouchableOpacity>
-      </View>
+      <HeaderApp
+        title={"Detail Budget"}
+        isBack={true}
+        rightComponent={
+          <TouchableOpacity onPress={confirmDelete} hitSlop={8}>
+            <Ionicons name="trash-bin-sharp" size={24} color="black" />
+          </TouchableOpacity>
+        }
+      />
 
       <View style={styles.contentContainer}>
         <ScrollView contentContainerStyle={styles.body}>
@@ -168,29 +183,39 @@ export default function BudgetDetail() {
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Spent</Text>
-            <Text style={styles.summaryValue}>
-              ${formatNumber(Math.max(0, budget.amount - budget.remain))}
-            </Text>
+            <Text style={styles.summaryValue}>{formatMoney(spent)}</Text>
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Period</Text>
-            <Text style={styles.summaryValue}>
-              {budget.fromDate.toDateString()} - {budget.toDate.toDateString()}
-            </Text>
+            <Text style={styles.summaryValue}>{periodText}</Text>
           </View>
 
-          <TouchableOpacity
-            onPress={() =>
-              router.push({
-                pathname: "/budgetForm",
-                params: { id: budget.id },
-              })
-            }
-            style={styles.editButton}
-          >
-            <Text style={styles.editButtonText}>Edit</Text>
-          </TouchableOpacity>
+          {budget.note ? (
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Note</Text>
+              <Text
+                style={[styles.summaryValue, { flex: 1, textAlign: "right" }]}
+                numberOfLines={3}
+              >
+                {budget.note}
+              </Text>
+            </View>
+          ) : null}
         </ScrollView>
+      </View>
+
+      <View style={styles.bottomActions}>
+        <TouchableOpacity
+          onPress={() =>
+            router.push({
+              pathname: "/budgetForm",
+              params: { id: budget.id },
+            })
+          }
+          style={styles.editButton}
+        >
+          <Text style={styles.editButtonText}>Edit</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Delete confirmation modal */}
@@ -227,15 +252,15 @@ export default function BudgetDetail() {
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: "#7F3DFF",
     flex: 1,
+    backgroundColor: "#fff",
   },
   header: {
-    height: 130,
+    paddingVertical: 12,
+    backgroundColor: "#7F3DFF",
     alignItems: "center",
-    justifyContent: "space-between",
     flexDirection: "row",
-    paddingHorizontal: 16,
+    justifyContent: "space-between",
   },
   headerTitle: { color: "#fff", fontWeight: "600", fontSize: 20 },
   contentContainer: {
@@ -247,6 +272,11 @@ const styles = StyleSheet.create({
   body: {
     padding: 16,
     gap: 16,
+  },
+  bottomActions: {
+    marginTop: "auto",
+    marginBottom: 30,
+    paddingHorizontal: 16,
   },
   tag: {
     alignSelf: "center",
@@ -320,9 +350,9 @@ const styles = StyleSheet.create({
   modalOverlayCenter: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
+    justifyContent: "flex-end",
     alignItems: "center",
-    paddingHorizontal: 20,
+    // paddingHorizontal: 20,
   },
   deleteModal: {
     width: "100%",
@@ -338,7 +368,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   loadingText: {
-    color: "#fff",
+    color: "#1E1E1E",
   },
   headerRightSpacer: {
     width: 18,
@@ -349,7 +379,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   errorText: {
-    color: "#fff",
+    color: "#1E1E1E",
   },
   modalNotch: {
     alignSelf: "center",

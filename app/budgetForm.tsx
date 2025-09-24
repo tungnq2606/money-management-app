@@ -1,5 +1,5 @@
 import AntDesign from "@expo/vector-icons/AntDesign";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
@@ -12,16 +12,21 @@ import {
   View,
 } from "react-native";
 import MonthSelector from "../components/MonthSelector";
+import { formatNumber } from "../constants/formatMoney";
 import {
-  getBudgetService,
-  getCategoryService,
-  getWalletService,
+  getGlobalBudgetService,
+  getGlobalCategoryService,
+  getGlobalWalletService,
   type CreateBudgetData,
 } from "../database/services";
 import { useAuthStore } from "../stores/authStore";
+import { useBudgetActions } from "../stores/storeHooks";
 
 export default function BudgetFormScreen() {
+  const params = useLocalSearchParams<{ id?: string }>();
+  const budgetId = (params?.id as string | undefined) || undefined;
   const user = useAuthStore((s) => s.user);
+  const { createBudget, updateBudget } = useBudgetActions();
 
   const [name, setName] = useState("");
   const [amount, setAmount] = useState<string>("");
@@ -39,6 +44,10 @@ export default function BudgetFormScreen() {
   const [walletModalVisible, setWalletModalVisible] = useState(false);
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
 
+  // For edit mode computations
+  const [originalAmount, setOriginalAmount] = useState<number | null>(null);
+  const [originalRemain, setOriginalRemain] = useState<number | null>(null);
+
   // Budget period: default to current month
   const [monthIndex, setMonthIndex] = useState<number>(new Date().getMonth());
   const [year, setYear] = useState<number>(new Date().getFullYear());
@@ -52,12 +61,12 @@ export default function BudgetFormScreen() {
   useEffect(() => {
     if (!user) return;
     try {
-      const walletList = getWalletService()
+      const walletList = getGlobalWalletService()
         .getWalletsByUserId(user._id.toString())
         .map((w) => ({ id: w._id.toString(), name: w.name }));
       setWallets(walletList);
 
-      const expenseCategories = getCategoryService()
+      const expenseCategories = getGlobalCategoryService()
         .getCategoriesByType(user._id.toString(), "expense")
         .map((c) => ({ id: c._id.toString(), name: c.name }));
       setCategories(expenseCategories);
@@ -66,6 +75,31 @@ export default function BudgetFormScreen() {
       Alert.alert("Error", "Failed to load wallets or categories");
     }
   }, [user]);
+
+  // Load existing budget when editing
+  useEffect(() => {
+    if (!budgetId) return;
+    try {
+      const found = getGlobalBudgetService().getBudgetById(budgetId);
+      if (!found) return;
+      setName(found.name);
+      setAmount(formatNumber(found.amount));
+      setNote(found.note || "");
+      setLoop(!!found.loop);
+      setSelectedWalletIds(found.walletId || []);
+      setSelectedCategoryId(found.categoryId);
+
+      // Set period based on fromDate
+      const from = new Date(found.fromDate);
+      setMonthIndex(from.getMonth());
+      setYear(from.getFullYear());
+
+      setOriginalAmount(found.amount);
+      setOriginalRemain(found.remain);
+    } catch (e) {
+      console.error(e);
+    }
+  }, [budgetId]);
 
   const toggleWallet = (id: string) => {
     setSelectedWalletIds((prev) =>
@@ -80,7 +114,7 @@ export default function BudgetFormScreen() {
     setMonthIndex(mIndex);
   };
 
-  const validateAndSave = () => {
+  const validateAndSave = async () => {
     if (!user) {
       Alert.alert("Not signed in", "Please sign in to create a budget.");
       return;
@@ -89,7 +123,7 @@ export default function BudgetFormScreen() {
       Alert.alert("Validation", "Please enter a budget name.");
       return;
     }
-    const amountNum = Number(amount.replace(/,/g, "."));
+    const amountNum = Number(amount.replace(/[^\d]/g, ""));
     if (!amount || isNaN(amountNum) || amountNum <= 0) {
       Alert.alert("Validation", "Please enter a valid amount (> 0).");
       return;
@@ -104,27 +138,55 @@ export default function BudgetFormScreen() {
     }
 
     try {
-      const payload: CreateBudgetData = {
-        name: name.trim(),
-        walletId: selectedWalletIds,
-        categoryId: selectedCategoryId,
-        amount: amountNum,
-        remain: amountNum,
-        loop,
-        fromDate,
-        toDate,
-        note: note.trim(),
-      };
-      getBudgetService().createBudget(payload);
-      Alert.alert("Success", "Budget has been created.", [
-        {
-          text: "OK",
-          onPress: () => router.back(),
-        },
-      ]);
+      if (budgetId) {
+        // Edit mode: preserve spent = originalAmount - originalRemain
+        const spent = Math.max(
+          0,
+          (originalAmount ?? amountNum) - (originalRemain ?? amountNum)
+        );
+        const newRemain = Math.max(0, amountNum - spent);
+
+        const ok = await updateBudget(budgetId, {
+          name: name.trim(),
+          walletId: selectedWalletIds,
+          categoryId: selectedCategoryId,
+          userId: user._id.toString(),
+          amount: amountNum,
+          remain: newRemain,
+          loop,
+          fromDate,
+          toDate,
+          note: note.trim(),
+        });
+        if (!ok) throw new Error("update budget failed");
+        Alert.alert("Success", "Budget updated successfully.", [
+          { text: "OK", onPress: () => router.replace("/(tabs)/budget") },
+        ]);
+      } else {
+        const payload: CreateBudgetData = {
+          name: name.trim(),
+          walletId: selectedWalletIds,
+          categoryId: selectedCategoryId,
+          userId: user._id.toString(),
+          amount: amountNum,
+          remain: amountNum,
+          loop,
+          fromDate,
+          toDate,
+          note: note.trim(),
+        };
+        const ok = await createBudget(payload);
+        if (!ok) throw new Error("create budget failed");
+        Alert.alert("Success", "Budget created successfully.", [
+          { text: "OK", onPress: () => router.replace("/(tabs)/budget") },
+        ]);
+      }
     } catch (e) {
       console.error(e);
-      Alert.alert("Error", "Failed to create budget.");
+      Alert.alert(
+        "Error",
+        budgetId ? "Failed to update budget." : "Failed to create budget."
+      );
     }
   };
 
@@ -134,7 +196,9 @@ export default function BudgetFormScreen() {
         <TouchableOpacity onPress={() => router.back()} hitSlop={8}>
           <AntDesign name="left" size={18} color="#ffffff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Create Budget</Text>
+        <Text style={styles.headerTitle}>
+          {budgetId ? "Edit Budget" : "Create Budget"}
+        </Text>
         <View style={{ width: 18 }} />
       </View>
 
@@ -156,7 +220,11 @@ export default function BudgetFormScreen() {
             <TextInput
               style={styles.input}
               value={amount}
-              onChangeText={setAmount}
+              onChangeText={(text) => {
+                const digits = text.replace(/[^\d]/g, "");
+                const formatted = digits ? formatNumber(Number(digits)) : "";
+                setAmount(formatted);
+              }}
               keyboardType="numeric"
               placeholder="e.g. 1000"
               placeholderTextColor="#C4C4C4"
@@ -236,7 +304,9 @@ export default function BudgetFormScreen() {
           </View>
 
           <TouchableOpacity style={styles.saveButton} onPress={validateAndSave}>
-            <Text style={styles.saveButtonText}>Create budget</Text>
+            <Text style={styles.saveButtonText}>
+              {budgetId ? "Update budget" : "Create budget"}
+            </Text>
           </TouchableOpacity>
         </ScrollView>
       </View>
@@ -412,7 +482,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: "70%",
+    height: "90%",
   },
   modalHeader: {
     flexDirection: "row",

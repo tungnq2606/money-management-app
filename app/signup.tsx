@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { useAuthStore } from "../stores/authStore";
 
 export default function SignUpScreen() {
@@ -19,6 +20,7 @@ export default function SignUpScreen() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [birthday, setBirthday] = useState("");
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [address, setAddress] = useState("");
   const { signUp, isLoading, error, clearError } = useAuthStore();
@@ -155,13 +157,29 @@ export default function SignUpScreen() {
 
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Birthday</Text>
-            <TextInput
+            <TouchableOpacity
               style={styles.input}
-              placeholder="YYYY-MM-DD"
-              value={birthday}
-              onChangeText={setBirthday}
-              autoCapitalize="none"
-              autoCorrect={false}
+              onPress={() => setDatePickerVisibility(true)}
+              activeOpacity={0.8}
+            >
+              <Text style={{ fontSize: 16, color: birthday ? "#333" : "#999" }}>
+                {birthday || "YYYY-MM-DD"}
+              </Text>
+            </TouchableOpacity>
+
+            <DateTimePickerModal
+              isVisible={isDatePickerVisible}
+              mode="date"
+              date={birthday ? new Date(birthday) : new Date()}
+              maximumDate={new Date()}
+              onConfirm={(date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, "0");
+                const day = String(date.getDate()).padStart(2, "0");
+                setBirthday(`${year}-${month}-${day}`);
+                setDatePickerVisibility(false);
+              }}
+              onCancel={() => setDatePickerVisibility(false)}
             />
           </View>
 

@@ -3,7 +3,6 @@ import SpendFrequencyChart from "@/components/SpendFrequencyChart";
 import TransactionItem from "@/components/TransactionItem";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import React from "react";
 import {
   Image,
   SafeAreaView,

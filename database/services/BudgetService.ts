@@ -1,5 +1,6 @@
 import Realm from "realm";
 import { Budget } from "../schemas/Budget";
+import { Transaction } from "../schemas/Transaction";
 
 export interface CreateBudgetData {
   name: string;
@@ -11,6 +12,7 @@ export interface CreateBudgetData {
   toDate: Date;
   fromDate: Date;
   note?: string;
+  userId: string;
 }
 
 class BudgetService {
@@ -29,6 +31,7 @@ class BudgetService {
           name: budgetData.name,
           walletId: budgetData.walletId,
           categoryId: budgetData.categoryId,
+          userId: budgetData.userId,
           amount: budgetData.amount,
           remain: budgetData.remain || budgetData.amount,
           loop: budgetData.loop || false,
@@ -43,6 +46,20 @@ class BudgetService {
       return budget;
     } catch (error) {
       console.error("Error creating budget:", error);
+      throw error;
+    }
+  }
+
+  getBudgetsByUserId(userId: string): Budget[] {
+    try {
+      return Array.from(
+        this.realm
+          .objects<Budget>("Budget")
+          .filtered("userId == $0", userId)
+          .sorted("createdAt", true)
+      );
+    } catch (error) {
+      console.error("Error getting budgets by user ID:", error);
       throw error;
     }
   }
@@ -171,6 +188,127 @@ class BudgetService {
       );
     } catch (error) {
       console.error("Error getting all budgets:", error);
+      throw error;
+    }
+  }
+
+  // Get budgets for a user and compute spent from transactions, updating remain
+  getBudgetsByUserIdWithSpending(userId: string): {
+    budget: Budget;
+    spent: number;
+    remain: number;
+  }[] {
+    try {
+      const budgets = this.getBudgetsByUserId(userId);
+
+      return budgets.map((budget) => {
+        // Build dynamic query for wallet IN {...}
+        let query =
+          "type == 'expense' AND categoryId == $0 AND createdAt >= $1 AND createdAt <= $2";
+        const params: any[] = [
+          budget.categoryId,
+          budget.fromDate,
+          budget.toDate,
+        ];
+
+        if (budget.walletId && budget.walletId.length > 0) {
+          const placeholders = budget.walletId
+            .map((_, idx) => `$${params.length + idx}`)
+            .join(", ");
+          query += ` AND walletId IN {${placeholders}}`;
+          params.push(...budget.walletId);
+        }
+
+        const transactions = this.realm
+          .objects<Transaction>("Transaction")
+          .filtered(query, ...params);
+
+        const spent = Array.from(transactions).reduce(
+          (sum, t) => sum + t.amount,
+          0
+        );
+        const calculatedRemain = Math.max(0, budget.amount - spent);
+
+        // Persist the updated remain for consistency
+        this.realm.write(() => {
+          budget.remain = calculatedRemain;
+          budget.updatedAt = new Date();
+        });
+
+        return { budget, spent, remain: calculatedRemain };
+      });
+    } catch (error) {
+      console.error("Error getting budgets by user ID with spending:", error);
+      throw error;
+    }
+  }
+
+  // Get budgets with spending computed within a custom date range
+  getBudgetsByUserIdWithSpendingInRange(
+    userId: string,
+    startDate: Date,
+    endDate: Date
+  ): {
+    budget: Budget;
+    spent: number;
+    remain: number;
+  }[] {
+    try {
+      const budgets = this.getBudgetsByUserId(userId);
+
+      return budgets
+        .map((budget) => {
+          // Determine overlap between requested range and budget's own range
+          const effectiveStart = new Date(
+            Math.max(startDate.getTime(), budget.fromDate.getTime())
+          );
+          const effectiveEnd = new Date(
+            Math.min(endDate.getTime(), budget.toDate.getTime())
+          );
+
+          // Skip if there is no overlap
+          if (effectiveStart.getTime() > effectiveEnd.getTime()) {
+            return null;
+          }
+
+          let query =
+            "type == 'expense' AND categoryId == $0 AND createdAt >= $1 AND createdAt <= $2";
+          const params: any[] = [
+            budget.categoryId,
+            effectiveStart,
+            effectiveEnd,
+          ];
+
+          if (budget.walletId && budget.walletId.length > 0) {
+            const placeholders = budget.walletId
+              .map((_, idx) => `$${params.length + idx}`)
+              .join(", ");
+            query += ` AND walletId IN {${placeholders}}`;
+            params.push(...budget.walletId);
+          }
+
+          const transactions = this.realm
+            .objects<Transaction>("Transaction")
+            .filtered(query, ...params);
+
+          const spent = Array.from(transactions).reduce(
+            (sum, t) => sum + t.amount,
+            0
+          );
+
+          const calculatedRemain = Math.max(0, budget.amount - spent);
+
+          // Do not overwrite budget period-based remain here; keep this method pure
+          return { budget, spent, remain: calculatedRemain };
+        })
+        .filter((x): x is { budget: Budget; spent: number; remain: number } =>
+          Boolean(x)
+        );
+    } catch (error) {
+      console.error(
+        "Error getting budgets by user ID with spending in range:",
+        error
+      );
       throw error;
     }
   }

@@ -5,7 +5,6 @@ import { User } from "../database/schemas/User";
 import {
   getGlobalCategoryService,
   getGlobalUserService,
-  getGlobalWalletService,
 } from "../database/services";
 import { CreateUserData, SignInData } from "../database/services/UserService";
 
@@ -97,14 +96,14 @@ export const useAuthStore = create<AuthStore>()(
           const nextYear = new Date();
           nextYear.setFullYear(currentDate.getFullYear() + 1);
 
-          getGlobalWalletService().createWallet({
-            userId: user._id.toString(),
-            name: "My Wallet",
-            type: "cash",
-            amount: 0,
-            fromDate: currentDate,
-            toDate: nextYear,
-          });
+          // getGlobalWalletService().createWallet({
+          //   userId: user._id.toString(),
+          //   name: "My Wallet",
+          //   type: "cash",
+          //   amount: 0,
+          //   fromDate: currentDate,
+          //   toDate: nextYear,
+          // });
 
           set({
             user,

@@ -1,9 +1,10 @@
+import HeaderApp from "@/components/HeaderApp";
 import { useAuthStore } from "@/stores/authStore";
 import Feather from "@expo/vector-icons/Feather";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 const ProfileScreen = () => {
@@ -34,6 +35,7 @@ const ProfileScreen = () => {
 
   return (
     <View style={styles.container}>
+      <HeaderApp title={"Profile"} />
       <View style={styles.header}>
         <View style={styles.avatarContainer}>
           <Feather name="user" size={60} color="#ccc" />
@@ -103,14 +105,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F6F6F6",
-    padding: 20,
   },
   header: {
     marginBottom: 30,
-    paddingTop: 50,
+    paddingTop: 20,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    paddingHorizontal: 16,
   },
   title: {
     fontSize: 28,
@@ -178,6 +180,7 @@ const styles = StyleSheet.create({
   viewBody: {
     borderRadius: 16,
     backgroundColor: "#fff",
+    paddingHorizontal: 16,
   },
   touchItem: {
     flexDirection: "row",

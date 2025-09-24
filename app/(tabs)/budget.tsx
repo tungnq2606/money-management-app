@@ -1,75 +1,120 @@
 import AntDesign from "@expo/vector-icons/AntDesign";
+import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
 import * as React from "react";
 import {
   FlatList,
+  LayoutAnimation,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
+  UIManager,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import HeaderApp from "../../components/HeaderApp";
+import { months } from "../../constants";
 import { formatMoney, formatNumber } from "../../constants/formatMoney";
+import { getGlobalBudgetService } from "../../database/services";
+import { useAuthStore } from "../../stores/authStore";
+
+if (
+  Platform.OS === "android" &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 export default function BudgetListScreen() {
-  // Temporary mock data for the list UI
-  const budgets = React.useMemo(
-    () => [
-      {
-        id: "shopping",
-        name: "Shopping",
-        color: "#FDBC10",
-        spent: 1200,
-        limit: 1000,
-      },
-      {
-        id: "transportation",
-        name: "Transportation",
-        color: "#4D7CFE",
-        spent: 350,
-        limit: 700,
-      },
-      {
-        id: "food",
-        name: "Food & Drink",
-        color: "#7F3DFF",
-        spent: 520,
-        limit: 800,
-      },
-    ],
-    []
-  );
+  const { user } = useAuthStore();
 
-  const months = React.useMemo(
-    () => [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ],
-    []
-  );
+  const [budgets, setBudgets] = React.useState<any[]>([]);
+
   const [monthIndex, setMonthIndex] = React.useState(new Date().getMonth());
 
-  const goPrev = () =>
+  const goPrev = () => {
     setMonthIndex((m) => (m - 1 + months.length) % months.length);
-  const goNext = () => setMonthIndex((m) => (m + 1) % months.length);
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+  };
+
+  const goNext = () => {
+    setMonthIndex((m) => (m + 1) % months.length);
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+  };
+
+  const loadBudgets = React.useCallback(() => {
+    if (!user) return;
+    const now = new Date();
+    const year = now.getFullYear();
+    const startDate = new Date(year, monthIndex, 1, 0, 0, 0, 0);
+    const endDate = new Date(year, monthIndex + 1, 0, 23, 59, 59, 999);
+
+    const items =
+      getGlobalBudgetService().getBudgetsByUserIdWithSpendingInRange(
+        user._id.toString(),
+        startDate,
+        endDate
+      );
+    const palette = ["#7F3DFF", "#4D7CFE", "#FDBC10", "#FF4D4F", "#22C55E"];
+    const mapped = items.map((item, idx) => ({
+      id: item.budget._id.toString(),
+      name: item.budget.name,
+      color: palette[idx % palette.length],
+      spent: item.spent,
+      limit: item.budget.amount,
+    }));
+    setBudgets(mapped);
+  }, [user, monthIndex]);
+
+  React.useEffect(() => {
+    loadBudgets();
+  }, [loadBudgets]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      loadBudgets();
+    }, [loadBudgets])
+  );
 
   const Header = (
     <View style={styles.header}>
-      <TouchableOpacity onPress={goPrev} hitSlop={8}>
+      <TouchableOpacity
+        onPress={goPrev}
+        hitSlop={8}
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: 12,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#7F3DFF",
+        }}
+      >
         <AntDesign name="left" size={18} color="#ffffff" />
       </TouchableOpacity>
-      <Text style={styles.headerTitle}>{months[monthIndex]}</Text>
-      <TouchableOpacity onPress={goNext} hitSlop={8}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: "center",
+          justifyContent: "center",
+
+          height: 40,
+        }}
+      >
+        <Text style={styles.headerTitle}>{months[monthIndex]}</Text>
+      </View>
+      <TouchableOpacity
+        onPress={goNext}
+        hitSlop={8}
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: 12,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#7F3DFF",
+        }}
+      >
         <AntDesign name="right" size={18} color="#ffffff" />
       </TouchableOpacity>
     </View>
@@ -164,38 +209,35 @@ export default function BudgetListScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
+      <HeaderApp title={"Budget"} />
       <View style={styles.headerContainer}>{Header}</View>
       <View style={styles.contentContainer}>{Body}</View>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: "#7F3DFF",
     flex: 1,
   },
   headerContainer: {
-    height: 130,
     alignItems: "center",
     justifyContent: "center",
   },
   header: {
+    paddingVertical: 12,
     paddingHorizontal: 16,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-
+    backgroundColor: "white",
     width: "100%",
   },
-  headerTitle: { color: "white", fontWeight: "500", fontSize: 24 },
+  headerTitle: { color: "black", fontWeight: "500", fontSize: 18 },
   contentContainer: {
     flex: 1,
-    backgroundColor: "#fff",
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    paddingBottom: 90,
+    paddingBottom: 100,
   },
   card: {
     backgroundColor: "#FFFFFF",

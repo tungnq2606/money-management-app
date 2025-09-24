@@ -1,43 +1,81 @@
-import React from 'react';
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import {
-  View,
-  Text,
   Platform,
-  StyleSheet,
   SafeAreaView,
   StatusBar,
-} from 'react-native';
-import {Colors} from "@/constants/Colors";
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { Colors } from "../constants/Colors";
 
 interface HeaderProps {
   title: string;
+  isBack?: boolean;
+  actionBack?: () => void;
+  rightComponent?: React.ReactNode;
 }
 
-export default function HeaderApp({title}: HeaderProps) {
+export default function HeaderApp({
+  title,
+  isBack = false,
+  actionBack,
+  rightComponent,
+}: HeaderProps) {
+  const router = useRouter();
+  const canGoBack = router.canGoBack();
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
+        {canGoBack && isBack ? (
+          <TouchableOpacity
+            onPress={() => {
+              if (actionBack) {
+                actionBack();
+              } else {
+                router.back();
+              }
+            }}
+            style={styles.backButton}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
+            <Ionicons name="chevron-back" size={24} color="#111" />
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.backButton} />
+        )}
         <Text style={styles.title}>{title}</Text>
+        {rightComponent ? rightComponent : <View style={styles.backButton} />}
       </View>
     </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: '#fff',
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    backgroundColor: "#fff",
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
     borderBottomWidth: 1,
-    borderColor: Colors.border
+    borderColor: Colors.border,
   },
   container: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
+    backgroundColor: "#fff",
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  backButton: {
+    padding: 4,
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
+    textAlign: "center",
   },
 });

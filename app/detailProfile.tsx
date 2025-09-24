@@ -1,5 +1,3 @@
-import { useAuthStore } from "@/stores";
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -10,13 +8,15 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+import HeaderApp from "../components/HeaderApp";
+import { useAuthStore } from "../stores";
 
 const DetailProfile: React.FC = () => {
   const { user, updateUser } = useAuthStore();
   const [value, setValue] = useState(user ? { ...user } : null);
   const [show, setShow] = useState(false);
 
-  // format ngày để hiển thị trong input
   const formatDate = (dateInput?: string | Date) => {
     if (!dateInput) return "";
     const date = new Date(dateInput);
@@ -27,7 +27,6 @@ const DetailProfile: React.FC = () => {
     });
   };
 
-  // Hàm xử lý update
   const handleUpdate = () => {
     if (!value?.name?.trim()) {
       Alert.alert("Error", "Name cannot be empty");
@@ -72,18 +71,11 @@ const DetailProfile: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.viewHeader}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={24} color="black" />
-        </TouchableOpacity>
-        <Text style={styles.txtHeader}>Profile</Text>
-        <View style={{ width: 24 }} />
-      </View>
+      <HeaderApp title={"Profile"} isBack={true} />
 
       {/* Name */}
       <View style={styles.viewInput}>
-        <Text>Name</Text>
+        <Text style={styles.label}>Name</Text>
         <TextInput
           placeholder="Name"
           style={styles.input}
@@ -97,7 +89,7 @@ const DetailProfile: React.FC = () => {
 
       {/* Address */}
       <View style={styles.viewInput}>
-        <Text>Address</Text>
+        <Text style={styles.label}>Address</Text>
         <TextInput
           placeholder="Address"
           style={styles.input}
@@ -110,28 +102,33 @@ const DetailProfile: React.FC = () => {
       </View>
 
       {/* Birthday */}
-      {/* <View style={styles.viewInput}>
-        <Text>Birthday</Text>
-        <TextInput
-          placeholder="YYYY-MM-DD"
-          style={styles.input}
-          value={formatDate(value?.birthday)}
-          onChangeText={(text) => {
-            const [year, month, day] = text.split("-");
-            if (day && month && year) {
-              const date = new Date(+year, +month - 1, +day);
-              if (!isNaN(date.getTime())) {
-                setValue((prev) => ({ ...prev, birthday: date.toISOString() }));
-              }
-            }
+      <View style={styles.viewInput}>
+        <Text style={styles.label}>Birthday</Text>
+        <TouchableOpacity style={styles.input} onPress={showMode}>
+          <Text
+            style={value?.birthday ? styles.inputText : styles.inputPlaceholder}
+          >
+            {value?.birthday
+              ? formatDate(value.birthday)
+              : "Select your birthday"}
+          </Text>
+        </TouchableOpacity>
+        <DateTimePickerModal
+          isVisible={show}
+          mode="date"
+          maximumDate={new Date()}
+          date={value?.birthday ? new Date(value.birthday) : new Date()}
+          onConfirm={(date) => {
+            setValue((prev) => (prev ? { ...prev, birthday: date } : prev));
+            setShow(false);
           }}
-          placeholderTextColor="#8f8e8eff"
+          onCancel={() => setShow(false)}
         />
-      </View> */}
+      </View>
 
       {/* Phone */}
       <View style={styles.viewInput}>
-        <Text>Phone</Text>
+        <Text style={styles.label}>Phone</Text>
         <TextInput
           placeholder="Phone"
           style={styles.input}
@@ -157,53 +154,97 @@ const DetailProfile: React.FC = () => {
 };
 
 export default DetailProfile;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#F9FAFB",
   },
   viewHeader: {
-    marginBottom: 30,
     paddingTop: 50,
+    paddingBottom: 20,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
     justifyContent: "space-between",
   },
   txtHeader: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#333",
-    alignSelf: "center",
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#111827",
+    textAlign: "center",
+    flex: 1,
+  },
+  viewInput: {
+    marginTop: 20,
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#000",
+  },
+  input: {
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    fontSize: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  inputText: {
+    color: "#000",
+  },
+  inputPlaceholder: {
+    color: "#8f8e8eff",
+  },
+  radioGroup: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
+  touchSelect: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    flex: 1,
+    marginRight: 10,
+  },
+  txtIncome: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: "#374151",
   },
   viewAdd: {
-    justifyContent: "center",
-    alignItems: "center",
-    width: "100%",
-    paddingHorizontal: 20,
+    marginTop: "auto",
+    marginBottom: 30,
+    paddingHorizontal: 16,
   },
   btnAdd: {
     backgroundColor: "#7F3DFF",
-    padding: 16,
-    borderRadius: 12,
-    width: "100%",
+    paddingVertical: 16,
+    borderRadius: 16,
     alignItems: "center",
+    shadowColor: "#7F3DFF",
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 6,
+    elevation: 3,
   },
   txtAdd: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "bold",
     color: "#fff",
-  },
-  input: {
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    marginTop: 8,
-  },
-  viewInput: {
-    marginHorizontal: 20,
+    letterSpacing: 0.5,
   },
 });

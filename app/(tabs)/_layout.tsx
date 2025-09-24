@@ -4,7 +4,7 @@ import { useAuthStore } from "@/stores/authStore";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Animated,
   Image,
@@ -24,11 +24,11 @@ export default function TabLayout() {
   const [isFloatingMenuVisible, setIsFloatingMenuVisible] = useState(false);
   const [animation] = useState(new Animated.Value(0));
 
-  // useEffect(() => {
-  //   if (!isAuthenticated || !user) {
-  //     router.replace("/signin");
-  //   }
-  // }, [isAuthenticated, user]);
+  useEffect(() => {
+    if (!isAuthenticated || !user) {
+      router.replace("/signin");
+    }
+  }, [isAuthenticated, user]);
 
   const toggleFloatingMenu = () => {
     const toValue = isFloatingMenuVisible ? 0 : 1;
