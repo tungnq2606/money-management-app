@@ -106,7 +106,6 @@ const AddTransactionScreen = () => {
     router.back();
   };
 
-  console.log(amount);
   return (
     <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
       <SafeAreaView

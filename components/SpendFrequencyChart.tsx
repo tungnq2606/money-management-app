@@ -21,7 +21,6 @@ const SpendFrequencyChart: React.FC<SpendFrequencyChartProps> = ({
   selectedPeriod: controlledSelectedPeriod,
   onChangePeriod,
 }) => {
-  console.log(data);
   const { width } = useWindowDimensions();
   const [uncontrolledSelectedPeriod, setUncontrolledSelectedPeriod] =
     useState("Today");
@@ -43,6 +42,7 @@ const SpendFrequencyChart: React.FC<SpendFrequencyChartProps> = ({
       <Text style={styles.label}>{title}</Text>
       <View style={styles.chartWrapper}>
         <LineChart
+          key={`chart-${selectedPeriod}-${data.length}`}
           data={data}
           width={width}
           height={200}
@@ -50,7 +50,7 @@ const SpendFrequencyChart: React.FC<SpendFrequencyChartProps> = ({
           thickness={3}
           hideDataPoints={true}
           isAnimated={true}
-          animationDuration={1000}
+          animationDuration={800}
           hideAxesAndRules={true}
           backgroundColor="transparent"
           startFillColor="#8B50FF"
@@ -63,8 +63,9 @@ const SpendFrequencyChart: React.FC<SpendFrequencyChartProps> = ({
           hideOrigin={true}
           yAxisColor="transparent"
           xAxisColor="transparent"
-          disableScroll
+          disableScroll={true}
           initialSpacing={0}
+          spacing={Math.max((width - 60) / Math.max(data.length - 1, 1), 10)}
         />
       </View>
       <View style={styles.buttonContainer}>
@@ -104,7 +105,6 @@ const styles = StyleSheet.create({
   },
   chartWrapper: {
     alignItems: "center",
-    marginHorizontal: -12,
   },
   buttonContainer: {
     flexDirection: "row",

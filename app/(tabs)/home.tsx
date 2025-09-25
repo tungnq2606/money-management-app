@@ -33,16 +33,62 @@ const HomeScreen = () => {
     setSelectedMonth(monthIndex);
   }, []);
 
+  // Period selection for chart and transaction filtering
+  const [selectedPeriod, setSelectedPeriod] = useState<string>("Today");
+
   const { startDate, endDate } = useMemo(() => {
     const now = new Date();
-    const year = now.getFullYear();
-    const start = new Date(year, selectedMonth, 1, 0, 0, 0, 0);
-    const end = new Date(year, selectedMonth + 1, 0, 23, 59, 59, 999);
-    return { startDate: start, endDate: end };
-  }, [selectedMonth]);
 
-  // Period selection for chart
-  const [selectedPeriod, setSelectedPeriod] = useState<string>("Month");
+    switch (selectedPeriod) {
+      case "Today": {
+        const start = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          0,
+          0,
+          0,
+          0
+        );
+        const end = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          23,
+          59,
+          59,
+          999
+        );
+        return { startDate: start, endDate: end };
+      }
+      case "Week": {
+        // Last 7 days ending today
+        const end = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          23,
+          59,
+          59,
+          999
+        );
+        const start = new Date(end);
+        start.setDate(end.getDate() - 6);
+        start.setHours(0, 0, 0, 0);
+        return { startDate: start, endDate: end };
+      }
+      case "Year": {
+        const start = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+        const end = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
+        return { startDate: start, endDate: end };
+      }
+      default: // Month
+        const year = now.getFullYear();
+        const start = new Date(year, selectedMonth, 1, 0, 0, 0, 0);
+        const end = new Date(year, selectedMonth + 1, 0, 23, 59, 59, 999);
+        return { startDate: start, endDate: end };
+    }
+  }, [selectedPeriod, selectedMonth]);
 
   useEffect(() => {
     if (!user) return;
@@ -53,7 +99,14 @@ const HomeScreen = () => {
     if (!user || wallets.length === 0) return;
     const walletIds = wallets.map((w) => w._id.toString());
     loadTransactionsWithFilters({ walletIds, startDate, endDate });
-  }, [user, wallets, startDate, endDate, loadTransactionsWithFilters]);
+  }, [
+    user,
+    wallets,
+    startDate,
+    endDate,
+    selectedPeriod,
+    loadTransactionsWithFilters,
+  ]);
 
   const { incomeTotal, expenseTotal } = useMemo(() => {
     let income = 0;
@@ -65,113 +118,37 @@ const HomeScreen = () => {
     return { incomeTotal: income, expenseTotal: expense };
   }, [transactions]);
 
-  console.log(transactions);
   const chartData = useMemo(() => {
-    // Helper to ensure Date
-    const toDate = (value: Date | string): Date =>
-      value instanceof Date ? value : new Date(value);
-
-    const now = new Date();
-
-    if (selectedPeriod === "Today") {
-      const start = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate(),
-        0,
-        0,
-        0,
-        0
-      );
-      const end = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate(),
-        23,
-        59,
-        59,
-        999
-      );
-      const buckets = Array.from({ length: 24 }, () => 0);
-      for (const t of transactions) {
-        const d = toDate(t.createdAt);
-        if (d >= start && d <= end) {
-          const hour = d.getHours();
-          const sign = t.type === "income" ? 1 : -1;
-          buckets[hour] += sign * t.amount;
-        }
-      }
-      return buckets.map((value) => ({ value }));
+    // Limit chart data to top 50 latest transactions for performance
+    if (transactions.length === 0) {
+      return [{ value: 0 }]; // Provide default data point when no transactions
     }
 
-    if (selectedPeriod === "Week") {
-      // Last 7 days ending today
-      const end = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate(),
-        23,
-        59,
-        59,
-        999
-      );
-      const start = new Date(end);
-      start.setDate(end.getDate() - 6);
-      const buckets = Array.from({ length: 7 }, () => 0);
-      for (const t of transactions) {
-        const d = toDate(t.createdAt);
-        if (d >= start && d <= end) {
-          const diffDays = Math.floor(
-            (d.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
-          );
-          const index = Math.min(Math.max(diffDays, 0), 6);
-          const sign = t.type === "income" ? 1 : -1;
-          buckets[index] += sign * t.amount;
-        }
-      }
-      return buckets.map((value) => ({ value }));
-    }
+    // Take only the first 50 transactions (already sorted by date, newest first)
+    const limitedTransactions = transactions.slice(0, 50);
 
-    if (selectedPeriod === "Year") {
-      const year = now.getFullYear();
-      const buckets = Array.from({ length: 12 }, () => 0);
-      for (const t of transactions) {
-        const d = toDate(t.createdAt);
-        if (d.getFullYear() === year) {
-          const monthIndex = d.getMonth();
-          const sign = t.type === "income" ? 1 : -1;
-          buckets[monthIndex] += sign * t.amount;
-        }
-      }
-      return buckets.map((value) => ({ value }));
-    }
+    const data = limitedTransactions.map((t) => ({
+      value: t.type === "income" ? t.amount : -t.amount,
+    }));
 
-    // Default: Month view based on currently selected month range
-    const daysInMonth = new Date(
-      startDate.getFullYear(),
-      startDate.getMonth() + 1,
-      0
-    ).getDate();
-    const buckets: number[] = Array.from({ length: daysInMonth }, () => 0);
-    for (const t of transactions) {
-      const d = toDate(t.createdAt);
-      if (d >= startDate && d <= endDate) {
-        const dayIndex = d.getDate() - 1;
-        const sign = t.type === "income" ? 1 : -1;
-        buckets[dayIndex] += sign * t.amount;
-      }
-    }
-    return buckets.map((value) => ({ value }));
-  }, [transactions, startDate, endDate, selectedPeriod]);
+    console.log(`Chart data for ${selectedPeriod}:`, {
+      totalTransactions: transactions.length,
+      displayedTransactions: limitedTransactions.length,
+      dataPoints: data.length,
+      sampleValues: data.slice(0, 5).map((d) => d.value),
+    });
 
+    return data;
+  }, [transactions, selectedPeriod]);
   const recentTransactions = useMemo(() => {
     const categoryService = getGlobalCategoryService();
-    return transactions.slice(0, 10).map((t) => {
+    // Show all transactions for the selected period (limited to first 20 for performance)
+    return transactions.slice(0, 20).map((t) => {
       const category = categoryService.getCategoryById(t.categoryId);
       const isIncome = t.type === "income";
       const icon = isIncome ? "creditcard" : "shoppingcart";
       const color = isIncome ? "#B7F4C3" : "#FDC65C";
-      const time = new Date(t.createdAt).toLocaleTimeString([], {
+      const time = new Date(t.date).toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
       });
@@ -198,7 +175,9 @@ const HomeScreen = () => {
             <AntDesign name="user" size={24} color="white" />
           </View>
 
-          <MonthSelector onMonthChange={(idx) => handleMonthChange(idx)} />
+          {selectedPeriod === "Month" && (
+            <MonthSelector onMonthChange={(idx) => handleMonthChange(idx)} />
+          )}
 
           <TouchableOpacity onPress={() => router.push("/notification")}>
             <Ionicons name="notifications" size={24} color="#7F3DFF" />
@@ -239,18 +218,26 @@ const HomeScreen = () => {
           </View>
         </View>
         <SpendFrequencyChart
+          key={`chart-${selectedPeriod}-${transactions.length}`}
           data={chartData}
           selectedPeriod={selectedPeriod}
           onChangePeriod={setSelectedPeriod}
         />
         <View style={styles.recentTransactionsHeader}>
           <Text style={styles.recentTransactionsTitle}>
-            Recent Transactions
+            {selectedPeriod === "Today"
+              ? "Today's Transactions"
+              : selectedPeriod === "Week"
+              ? "This Week's Transactions"
+              : selectedPeriod === "Year"
+              ? "This Year's Transactions"
+              : "This Month's Transactions"}
           </Text>
           <TouchableOpacity style={styles.viewAllButton}>
             <Text style={styles.viewAllText}>See All</Text>
           </TouchableOpacity>
         </View>
+
         <View>
           {recentTransactions.map((transaction) => (
             <TransactionItem

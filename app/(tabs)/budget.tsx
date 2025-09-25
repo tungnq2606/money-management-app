@@ -72,7 +72,6 @@ export default function BudgetListScreen() {
     setBudgets(mapped);
   }, [user, monthIndex]);
 
-  console.log(budgets);
   React.useEffect(() => {
     loadBudgets();
   }, [loadBudgets]);
