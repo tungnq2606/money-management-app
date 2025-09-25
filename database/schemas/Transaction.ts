@@ -8,6 +8,7 @@ export class Transaction extends Realm.Object<Transaction> {
   amount!: number;
   type!: "income" | "expense";
   note!: string;
+  date!: Date;
   createdAt!: Date;
   updatedAt!: Date;
 
@@ -21,6 +22,7 @@ export class Transaction extends Realm.Object<Transaction> {
       amount: "double",
       type: "string",
       note: { type: "string" as const, default: "" },
+      date: "date",
       createdAt: "date",
       updatedAt: "date",
     },

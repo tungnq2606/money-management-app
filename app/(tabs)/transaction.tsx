@@ -59,7 +59,7 @@ export default function TransactionScreen() {
     const earlierItems: SectionItem[] = [];
 
     transactions.forEach((t) => {
-      const createdAt = new Date(t.createdAt);
+      const date = new Date(t.date);
       const title =
         categoryNameById.get(t.categoryId) ||
         (t.type === "income" ? "Income" : "Expense");
@@ -69,14 +69,14 @@ export default function TransactionScreen() {
         type: title,
         description: t.note || "",
         amount: t.type === "income" ? t.amount : -t.amount,
-        time: formatTime(createdAt),
+        time: formatTime(date),
         icon,
         color,
       };
 
-      if (isSameDay(createdAt, today)) {
+      if (isSameDay(date, today)) {
         todayItems.push(item);
-      } else if (isSameDay(createdAt, yesterday)) {
+      } else if (isSameDay(date, yesterday)) {
         yesterdayItems.push(item);
       } else {
         earlierItems.push(item);
