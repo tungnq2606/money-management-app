@@ -40,17 +40,7 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      const walletsRealm = getGlobalWalletService().getWalletsByUserId(userId);
-      const wallets = walletsRealm.map((item) => ({
-        _id: String(item._id),
-        name: item.name,
-        type: item.type,
-        amount: item.amount,
-        toDate: item.toDate,
-        fromDate: item.fromDate,
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt,
-      }));
+      const wallets = getGlobalWalletService().getWalletsByUserId(userId);
 
       const totalAmount = getGlobalWalletService().getTotalWalletAmount(userId);
 
