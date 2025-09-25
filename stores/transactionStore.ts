@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { Transaction } from "../database/schemas/Transaction";
 import {
+  getGlobalBudgetService,
+  getGlobalNotificationService,
   getGlobalTransactionService,
   getGlobalWalletService,
 } from "../database/services";
@@ -155,6 +157,64 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
         getGlobalWalletService().updateWalletAmount(
           transactionData.walletId,
           newAmount
+        );
+      }
+
+      // If expense, update related budgets' remain and create a notification
+      try {
+        if (transactionData.type === "expense") {
+          const budgetService = getGlobalBudgetService();
+          // Find budgets by category first, then filter by wallet inclusion and date range
+          const candidateBudgets = budgetService.getBudgetsByCategoryId(
+            transactionData.categoryId
+          );
+          const txDate = transactionData.date || new Date();
+
+          const affectedBudgets = candidateBudgets.filter((b) => {
+            const walletMatches = Array.isArray(b.walletId)
+              ? b.walletId.includes(transactionData.walletId)
+              : false;
+            const inRange = txDate >= b.fromDate && txDate <= b.toDate;
+            return walletMatches && inRange;
+          });
+
+          affectedBudgets.forEach((b) => {
+            const newRemain = Math.max(
+              0,
+              (b.remain || 0) - transactionData.amount
+            );
+            budgetService.updateBudgetRemain(b._id.toString(), newRemain);
+          });
+
+          // Create notification for the user
+          if (wallet) {
+            const notificationService = getGlobalNotificationService();
+            const budgetNames = affectedBudgets.map((b) => b.name).join(", ");
+            const content =
+              affectedBudgets.length > 0
+                ? `Expense ${transactionData.amount} applied to budget(s): ${budgetNames}`
+                : `Expense ${transactionData.amount} recorded in wallet ${wallet.name}`;
+
+            notificationService.createNotification({
+              content,
+              time: new Date(),
+              userId: wallet.userId,
+            });
+          }
+        } else if (wallet) {
+          // For income, optionally notify transaction creation
+          const notificationService = getGlobalNotificationService();
+          notificationService.createNotification({
+            content: `Income ${transactionData.amount} recorded in wallet ${wallet.name}`,
+            time: new Date(),
+            userId: wallet.userId,
+          });
+        }
+      } catch (notifyOrBudgetError) {
+        // Non-fatal: log but do not block transaction creation
+        console.error(
+          "Post-transaction budget/notification error:",
+          notifyOrBudgetError
         );
       }
 

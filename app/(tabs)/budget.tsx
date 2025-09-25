@@ -49,20 +49,26 @@ export default function BudgetListScreen() {
     const startDate = new Date(year, monthIndex, 1, 0, 0, 0, 0);
     const endDate = new Date(year, monthIndex + 1, 0, 23, 59, 59, 999);
 
-    const items =
-      getGlobalBudgetService().getBudgetsByUserIdWithSpendingInRange(
-        user._id.toString(),
-        startDate,
-        endDate
-      );
+    const allBudgets = getGlobalBudgetService().getBudgetsByUserId(
+      user._id.toString()
+    );
+
+    // Filter budgets that overlap with the selected month
+    const selected = allBudgets.filter(
+      (b) => b.fromDate <= endDate && b.toDate >= startDate
+    );
+
     const palette = ["#7F3DFF", "#4D7CFE", "#FDBC10", "#FF4D4F", "#22C55E"];
-    const mapped = items.map((item, idx) => ({
-      id: item.budget._id.toString(),
-      name: item.budget.name,
-      color: palette[idx % palette.length],
-      spent: item.spent,
-      limit: item.budget.amount,
-    }));
+    const mapped = selected.map((b, idx) => {
+      const spent = Math.max(0, (b.amount || 0) - (b.remain || 0));
+      return {
+        id: b._id.toString(),
+        name: b.name,
+        color: palette[idx % palette.length],
+        spent,
+        limit: b.amount,
+      };
+    });
     setBudgets(mapped);
   }, [user, monthIndex]);
 
