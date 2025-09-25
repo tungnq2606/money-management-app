@@ -1,4 +1,5 @@
 import Realm from "realm";
+import { Category } from "../schemas/Category";
 import { Transaction } from "../schemas/Transaction";
 
 export interface CreateTransactionData {
@@ -29,7 +30,8 @@ class TransactionService {
           amount: transactionData.amount,
           type: transactionData.type,
           note: transactionData.note || "",
-          createdAt: transactionDate,
+          date: transactionDate,
+          createdAt: now,
           updatedAt: now,
         });
       });
@@ -47,7 +49,7 @@ class TransactionService {
         this.realm
           .objects<Transaction>("Transaction")
           .filtered("walletId == $0", walletId)
-          .sorted("createdAt", true)
+          .sorted("date", true)
       );
     } catch (error) {
       console.error("Error getting transactions by wallet ID:", error);
@@ -61,7 +63,7 @@ class TransactionService {
         this.realm
           .objects<Transaction>("Transaction")
           .filtered("categoryId == $0", categoryId)
-          .sorted("createdAt", true)
+          .sorted("date", true)
       );
     } catch (error) {
       console.error("Error getting transactions by category ID:", error);
@@ -75,7 +77,7 @@ class TransactionService {
         this.realm
           .objects<Transaction>("Transaction")
           .filtered("type == $0", type)
-          .sorted("createdAt", true)
+          .sorted("date", true)
       );
     } catch (error) {
       console.error("Error getting transactions by type:", error);
@@ -88,8 +90,8 @@ class TransactionService {
       return Array.from(
         this.realm
           .objects<Transaction>("Transaction")
-          .filtered("createdAt >= $0 AND createdAt <= $1", startDate, endDate)
-          .sorted("createdAt", true)
+          .filtered("date >= $0 AND date <= $1", startDate, endDate)
+          .sorted("date", true)
       );
     } catch (error) {
       console.error("Error getting transactions by date range:", error);
@@ -126,7 +128,7 @@ class TransactionService {
           transaction.amount = updateData.amount;
         if (updateData.type) transaction.type = updateData.type;
         if (updateData.note !== undefined) transaction.note = updateData.note;
-        if (updateData.date) transaction.createdAt = updateData.date;
+        if (updateData.date) transaction.date = updateData.date;
         transaction.updatedAt = new Date();
       });
 
@@ -186,19 +188,19 @@ class TransactionService {
       }
 
       if (filters.startDate) {
-        query += ` AND createdAt >= $${queryParams.length}`;
+        query += ` AND date >= $${queryParams.length}`;
         queryParams.push(filters.startDate);
       }
 
       if (filters.endDate) {
-        query += ` AND createdAt <= $${queryParams.length}`;
+        query += ` AND date <= $${queryParams.length}`;
         queryParams.push(filters.endDate);
       }
 
       const results = this.realm
         .objects<Transaction>("Transaction")
         .filtered(query, ...queryParams)
-        .sorted("createdAt", true);
+        .sorted("date", true);
 
       const transactionArray = Array.from(results);
 
@@ -216,10 +218,197 @@ class TransactionService {
   getAllTransactions(): Transaction[] {
     try {
       return Array.from(
-        this.realm.objects<Transaction>("Transaction").sorted("createdAt", true)
+        this.realm.objects<Transaction>("Transaction").sorted("date", true)
       );
     } catch (error) {
       console.error("Error getting all transactions:", error);
+      throw error;
+    }
+  }
+
+  // Helper method to create 100 sample transactions for testing
+  createSampleTransactions(walletId: string): void {
+    try {
+      // Get all categories from the database
+      const allCategories = this.realm.objects<Category>("Category");
+      const incomeCategories = Array.from(
+        allCategories.filtered("type == 'income'")
+      );
+      const expenseCategories = Array.from(
+        allCategories.filtered("type == 'expense'")
+      );
+
+      if (incomeCategories.length === 0 || expenseCategories.length === 0) {
+        console.error(
+          "No categories found. Please create default categories first."
+        );
+        return;
+      }
+
+      // Sample transaction data with amounts and notes
+      const sampleIncomes = [
+        {
+          amounts: [3500, 4000, 4500, 5000],
+          notes: ["Monthly salary", "Salary payment", "Payroll"],
+        },
+        {
+          amounts: [500, 800, 1200, 1500],
+          notes: ["Freelance project", "Consulting fee", "Side business"],
+        },
+        {
+          amounts: [200, 350, 600, 1000],
+          notes: ["Stock dividend", "Crypto gains", "Bond interest"],
+        },
+        {
+          amounts: [50, 100, 200, 300],
+          notes: ["Gift money", "Refund", "Cashback"],
+        },
+      ];
+
+      const sampleExpenses = [
+        {
+          amounts: [15, 25, 45, 80],
+          notes: ["Lunch", "Dinner", "Groceries", "Restaurant"],
+        },
+        {
+          amounts: [5, 15, 35, 60],
+          notes: ["Bus fare", "Gas", "Uber ride", "Parking"],
+        },
+        {
+          amounts: [30, 75, 150, 300],
+          notes: ["Clothes", "Electronics", "Home items", "Books"],
+        },
+        {
+          amounts: [12, 20, 40, 85],
+          notes: ["Movie ticket", "Concert", "Games", "Streaming"],
+        },
+        {
+          amounts: [50, 100, 200, 400],
+          notes: ["Internet", "Electricity", "Phone", "Rent"],
+        },
+        {
+          amounts: [25, 50, 100, 200],
+          notes: ["Pharmacy", "Doctor visit", "Insurance", "Dental"],
+        },
+        {
+          amounts: [20, 50, 100, 500],
+          notes: ["Books", "Course", "Workshop", "Tuition"],
+        },
+        {
+          amounts: [10, 25, 50, 100],
+          notes: ["Miscellaneous", "Fees", "Donations", "Gifts"],
+        },
+      ];
+
+      const now = new Date();
+      let transactionCount = 0;
+
+      // Generate transactions for the last 3 months
+      for (let month = 0; month < 3 && transactionCount < 100; month++) {
+        for (let day = 1; day <= 30 && transactionCount < 100; day++) {
+          const transactionDate = new Date(
+            now.getFullYear(),
+            now.getMonth() - month,
+            day
+          );
+
+          // Skip future dates
+          if (transactionDate > now) continue;
+
+          // Generate 1-3 transactions per day randomly
+          const dailyTransactions = Math.floor(Math.random() * 3) + 1;
+
+          for (
+            let i = 0;
+            i < dailyTransactions && transactionCount < 100;
+            i++
+          ) {
+            const isIncome = Math.random() < 0.3; // 30% chance of income
+
+            if (isIncome) {
+              const incomeData =
+                sampleIncomes[Math.floor(Math.random() * sampleIncomes.length)];
+              const amount =
+                incomeData.amounts[
+                  Math.floor(Math.random() * incomeData.amounts.length)
+                ];
+              const note =
+                incomeData.notes[
+                  Math.floor(Math.random() * incomeData.notes.length)
+                ];
+
+              // Get a random income category
+              const randomIncomeCategory =
+                incomeCategories[
+                  Math.floor(Math.random() * incomeCategories.length)
+                ];
+
+              this.createTransaction({
+                walletId,
+                categoryId: randomIncomeCategory._id.toString(),
+                amount,
+                type: "income",
+                note,
+                date: new Date(
+                  transactionDate.getTime() +
+                    Math.random() * 24 * 60 * 60 * 1000
+                ), // Random time of day
+              });
+            } else {
+              const expenseData =
+                sampleExpenses[
+                  Math.floor(Math.random() * sampleExpenses.length)
+                ];
+              const amount =
+                expenseData.amounts[
+                  Math.floor(Math.random() * expenseData.amounts.length)
+                ];
+              const note =
+                expenseData.notes[
+                  Math.floor(Math.random() * expenseData.notes.length)
+                ];
+
+              // Get a random expense category
+              const randomExpenseCategory =
+                expenseCategories[
+                  Math.floor(Math.random() * expenseCategories.length)
+                ];
+
+              this.createTransaction({
+                walletId,
+                categoryId: randomExpenseCategory._id.toString(),
+                amount,
+                type: "expense",
+                note,
+                date: new Date(
+                  transactionDate.getTime() +
+                    Math.random() * 24 * 60 * 60 * 1000
+                ), // Random time of day
+              });
+            }
+
+            transactionCount++;
+          }
+        }
+      }
+
+      console.log(`Created ${transactionCount} sample transactions`);
+    } catch (error) {
+      console.error("Error creating sample transactions:", error);
+      throw error;
+    }
+  }
+
+  // Helper method to delete all transactions (useful for testing)
+  deleteAllTransactions(): void {
+    try {
+      this.realm.write(() => {
+        const allTransactions = this.realm.objects<Transaction>("Transaction");
+        this.realm.delete(allTransactions);
+      });
+      console.log("All transactions deleted");
+    } catch (error) {
+      console.error("Error deleting all transactions:", error);
       throw error;
     }
   }

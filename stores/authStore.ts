@@ -4,7 +4,9 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import { User } from "../database/schemas/User";
 import {
   getGlobalCategoryService,
+  getGlobalTransactionService,
   getGlobalUserService,
+  getGlobalWalletService,
 } from "../database/services";
 import { CreateUserData, SignInData } from "../database/services/UserService";
 
@@ -96,14 +98,19 @@ export const useAuthStore = create<AuthStore>()(
           const nextYear = new Date();
           nextYear.setFullYear(currentDate.getFullYear() + 1);
 
-          // getGlobalWalletService().createWallet({
-          //   userId: user._id.toString(),
-          //   name: "My Wallet",
-          //   type: "cash",
-          //   amount: 0,
-          //   fromDate: currentDate,
-          //   toDate: nextYear,
-          // });
+          const defaultWallet = getGlobalWalletService().createWallet({
+            userId: user._id.toString(),
+            name: "My Wallet",
+            type: "cash",
+            amount: 0,
+            fromDate: currentDate,
+            toDate: nextYear,
+          });
+
+          // Create sample transactions for the new user
+          getGlobalTransactionService().createSampleTransactions(
+            defaultWallet._id.toString()
+          );
 
           set({
             user,
