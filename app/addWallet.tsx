@@ -1,3 +1,5 @@
+import FormInput from "@/components/FormInput";
+import HeaderApp from "@/components/HeaderApp";
 import { formatNumber } from "@/constants/formatMoney";
 import { useAuthStore, useWalletStore } from "@/stores";
 import { AntDesign } from "@expo/vector-icons";
@@ -6,11 +8,10 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   Alert,
-  FlatList,
   Modal,
+  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -26,159 +27,168 @@ const walletTypes = [
   },
 ];
 
+interface WalletFormData {
+  name: string;
+  amount: string;
+  type: string;
+}
+
 const AddWallet = () => {
   const params = useLocalSearchParams<{ walletId?: string }>();
   const walletId = params?.walletId;
   const { user } = useAuthStore();
   const { createWallet, walletById, updateWallet } = useWalletStore();
+
   const [modalVisible, setModalVisible] = useState(false);
-  const [value, setValue] = useState({
+  const [formData, setFormData] = useState<WalletFormData>({
     name: "",
     amount: "",
     type: "cash",
   });
+  const [errors, setErrors] = useState<Partial<WalletFormData>>({});
 
   useEffect(() => {
     if (walletId) {
       const wallet = walletById(walletId);
       if (wallet) {
-        setValue({
+        setFormData({
           name: wallet.name,
           amount: wallet.amount.toString(),
           type: wallet.type,
         });
       }
     }
-  }, [walletId]);
+  }, [walletId, walletById]);
 
-  const handleAddWallet = async () => {
-    const { name, amount, type } = value;
-    if (!name || !amount) {
-      Alert.alert("Error", "Please fill in all required fields.");
+  const validateForm = (): boolean => {
+    const newErrors: Partial<WalletFormData> = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = "Wallet name is required";
+    }
+
+    if (!formData.amount.trim()) {
+      newErrors.amount = "Amount is required";
+    } else if (
+      isNaN(parseFloat(formData.amount)) ||
+      parseFloat(formData.amount) < 0
+    ) {
+      newErrors.amount = "Please enter a valid amount";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) {
       return;
     }
+
     if (!user?._id) {
       Alert.alert("Error", "User not found.");
       return;
     }
+
     const walletData = {
       userId: String(user._id),
-      name,
-      type,
-      amount: parseFloat(amount),
+      name: formData.name.trim(),
+      type: formData.type,
+      amount: parseFloat(formData.amount),
     };
+
     try {
-      const success = await createWallet(walletData);
+      const success = walletId
+        ? await updateWallet(walletId, walletData)
+        : await createWallet(walletData);
+
       if (success) {
-        Alert.alert("Success", "Wallet created successfully!", [
+        const message = walletId
+          ? "Wallet updated successfully!"
+          : "Wallet created successfully!";
+        Alert.alert("Success", message, [
           { text: "OK", onPress: () => router.back() },
         ]);
       } else {
-        Alert.alert("Error", "Failed to create wallet.");
+        const message = walletId
+          ? "Failed to update wallet."
+          : "Failed to create wallet.";
+        Alert.alert("Error", message);
       }
     } catch (error) {
-      console.error("Error creating wallet:", error);
+      console.error("Error saving wallet:", error);
       Alert.alert("Error", "An unexpected error occurred.");
     }
   };
 
-  const handleUpdateWallet = async () => {
-    const { name, amount, type } = value;
-    if (!name || !amount) {
-      Alert.alert("Error", "Please fill in all required fields.");
-      return;
-    }
-    if (!user?._id) {
-      Alert.alert("Error", "User not found.");
-      return;
-    }
-    if (!walletId) {
-      Alert.alert("Error", "Wallet ID not found.");
-      return;
-    }
-    const walletData = {
-      userId: String(user._id),
-      name,
-      type,
-      amount: parseFloat(amount),
-    };
-    try {
-      const success = await updateWallet(walletId, walletData);
-      if (success) {
-        Alert.alert("Success", "Wallet updated successfully!", [
-          { text: "OK", onPress: () => router.back() },
-        ]);
-      } else {
-        Alert.alert("Error", "Failed to update wallet.");
-      }
-    } catch (error) {
-      console.error("Error updating wallet:", error);
-      Alert.alert("Error", "An unexpected error occurred.");
+  const selectedType = walletTypes.find((w) => w.key === formData.type);
+
+  const handleInputChange = (field: keyof WalletFormData, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
   };
-
-  const selectedType = walletTypes.find((w) => w.key === value.type);
 
   return (
     <View style={styles.container}>
-      <View style={styles.viewHeader}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={24} color="black" />
-        </TouchableOpacity>
-        <Text style={styles.txtHeader}>
-          {walletId ? "Edit Wallet" : "Add Wallet"}
-        </Text>
-        <View style={{ width: 24 }} />
-      </View>
+      <HeaderApp
+        title={walletId ? "Edit Wallet" : "Add Wallet"}
+        isBack={true}
+      />
+
       <View style={styles.viewForm}>
-        <TextInput
-          placeholder="Wallet Name"
-          style={styles.input}
-          value={value.name}
-          onChangeText={(text) => setValue({ ...value, name: text })}
-          placeholderTextColor={"#8f8e8eff"}
+        <FormInput
+          label="Wallet Name"
+          placeholder="Enter wallet name"
+          value={formData.name}
+          onChangeText={(text) => handleInputChange("name", text)}
+          errorMessage={errors.name}
         />
-        <TextInput
-          placeholder="Amount"
-          style={styles.input}
-          value={formatNumber(Number(value.amount))}
+
+        <FormInput
+          label="Amount"
+          placeholder="Enter amount"
+          value={formatNumber(Number(formData.amount))}
           onChangeText={(text) => {
             const numericValue = text.replace(/[^0-9]/g, "");
-            setValue({ ...value, amount: numericValue });
+            handleInputChange("amount", numericValue);
           }}
-          placeholderTextColor={"#8f8e8eff"}
+          errorMessage={errors.amount}
           keyboardType="numeric"
         />
 
-        {/* Nút chọn loại ví (mở modal) */}
-        <TouchableOpacity
-          style={styles.selectTypeButton}
-          onPress={() => setModalVisible(true)}
-        >
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Ionicons
-              name={(selectedType?.icon || "wallet-outline") as any}
-              size={22}
-              color={selectedType?.color || "#6B7280"}
-            />
-            <Text style={styles.selectTypeText}>
-              {selectedType?.label || "Select Wallet Type"}
-            </Text>
-          </View>
-          <AntDesign name="down" size={18} color="#6B7280" />
-        </TouchableOpacity>
+        {/* Wallet Type Selection */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Wallet Type</Text>
+          <TouchableOpacity
+            style={styles.selectTypeButton}
+            onPress={() => setModalVisible(true)}
+          >
+            <View style={styles.selectTypeContent}>
+              <Ionicons
+                name={(selectedType?.icon || "wallet-outline") as any}
+                size={22}
+                color={selectedType?.color || "#6B7280"}
+              />
+              <Text style={styles.selectTypeText}>
+                {selectedType?.label || "Select Wallet Type"}
+              </Text>
+            </View>
+            <AntDesign name="down" size={18} color="#6B7280" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.viewAdd}>
-        <TouchableOpacity
-          style={styles.btnAdd}
-          onPress={walletId ? handleUpdateWallet : handleAddWallet}
-        >
-          <Text style={styles.txtAdd}>{walletId ? "Update" : "Create"}</Text>
+        <TouchableOpacity style={styles.btnAdd} onPress={handleSubmit}>
+          <Text style={styles.txtAdd}>
+            {walletId ? "Update Wallet" : "Create Wallet"}
+          </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Modal chọn loại ví */}
       <Modal
         visible={modalVisible}
         transparent
@@ -188,44 +198,40 @@ const AddWallet = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={{ fontSize: 18, fontWeight: "700" }}>
-                Select Wallet Type
-              </Text>
+              <Text style={styles.modalTitle}>Select Wallet Type</Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <AntDesign name="close" size={24} color="#6B7280" />
+                <AntDesign name="close" size={24} color="#000" />
               </TouchableOpacity>
             </View>
-            <FlatList
-              data={walletTypes}
-              keyExtractor={(item) => item.key}
-              renderItem={({ item }) => (
+            <ScrollView>
+              {walletTypes.map((item) => (
                 <TouchableOpacity
+                  key={item.key}
                   style={[
-                    styles.walletOption,
-                    value.type === item.key && styles.walletOptionActive,
+                    styles.modalItem,
+                    formData.type === item.key && styles.selectedItem,
                   ]}
                   onPress={() => {
-                    setValue((prev) => ({ ...prev, type: item.key }));
+                    handleInputChange("type", item.key);
                     setModalVisible(false);
                   }}
+                  activeOpacity={0.7}
                 >
-                  <Ionicons
-                    name={item.icon as any}
-                    size={22}
-                    color={item.color}
-                    style={{ marginRight: 12 }}
-                  />
-                  <Text style={styles.walletName}>{item.label}</Text>
-                  {value.type === item.key && (
-                    <AntDesign
-                      name="checkcircle"
-                      size={20}
+                  <View style={styles.modalItemContent}>
+                    <Ionicons
+                      name={item.icon as any}
+                      size={22}
                       color={item.color}
+                      style={{ marginRight: 12 }}
                     />
+                    <Text style={styles.modalItemText}>{item.label}</Text>
+                  </View>
+                  {formData.type === item.key && (
+                    <AntDesign name="check" size={18} color="#7F3DFF" />
                   )}
                 </TouchableOpacity>
-              )}
-            />
+              ))}
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -253,20 +259,14 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#1E1E1E",
   },
-  input: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+  inputGroup: {
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: "#E4E4E7",
+  },
+  inputLabel: {
     fontSize: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 2,
+    fontWeight: "600",
+    color: "#374151",
+    marginBottom: 8,
   },
   selectTypeButton: {
     backgroundColor: "#fff",
@@ -275,9 +275,17 @@ const styles = StyleSheet.create({
     borderColor: "#E4E4E7",
     paddingVertical: 14,
     paddingHorizontal: 16,
-    marginBottom: 16,
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  selectTypeContent: {
+    flexDirection: "row",
     alignItems: "center",
   },
   selectTypeText: {
@@ -312,42 +320,48 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.2)",
+    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "flex-end",
   },
   modalContent: {
     backgroundColor: "#FFF",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingBottom: 20,
-    paddingTop: 10,
-    maxHeight: "60%",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    height: "90%",
   },
   modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingBottom: 10,
-    borderBottomWidth: 0.5,
-    borderBottomColor: "#E5E7EB",
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E0E0E0",
   },
-  walletOption: {
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#000",
+  },
+  modalItem: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F5F5F5",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  selectedItem: {
+    backgroundColor: "#F7F4FF",
+  },
+  modalItemContent: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderBottomWidth: 0.5,
-    borderBottomColor: "#E5E7EB",
-  },
-  walletOptionActive: {
-    backgroundColor: "#F3E8FF",
-  },
-  walletName: {
     flex: 1,
+  },
+  modalItemText: {
     fontSize: 16,
-    fontWeight: "500",
-    color: "#111827",
+    color: "#000",
   },
   viewForm: {
     flex: 1,

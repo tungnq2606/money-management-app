@@ -56,7 +56,7 @@ A modern React Native mobile application for personal finance management, built 
 
 ### Prerequisites
 
-- Node.js (v16 or higher)
+- Node.js (v20 or higher)
 - npm or yarn
 - Expo CLI
 - iOS Simulator or Android Emulator (or Expo Go app)

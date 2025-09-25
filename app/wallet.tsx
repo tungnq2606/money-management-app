@@ -127,7 +127,7 @@ const Wallet = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Modal giữ nguyên nếu bạn vẫn muốn popup option */}
+      {/* Modal kept if you still want popup option */}
       <Modal
         visible={modalVisible}
         transparent
@@ -188,7 +188,7 @@ export default Wallet;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F9FAFB", // nền xám nhạt tạo cảm giác nhẹ nhàng
+    backgroundColor: "#F9FAFB", // light gray background for a gentle feel
   },
   viewHeader: {
     paddingTop: 50,

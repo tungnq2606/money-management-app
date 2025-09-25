@@ -8,9 +8,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "lint": "expo lint",
-    "seed:init": "tsx scripts/seed.ts init",
-    "seed:reset": "tsx scripts/seed.ts reset"
+    "lint": "expo lint"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",

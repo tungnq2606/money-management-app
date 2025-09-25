@@ -311,7 +311,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     marginVertical: 24,
     justifyContent: "space-between",
-    paddingHorizontal: 16,
   },
   accountBox: {
     flex: 1,
@@ -353,6 +352,7 @@ const styles = StyleSheet.create({
   },
   accountBoxContent: {
     marginLeft: 8,
+    flex: 1,
   },
   recentTransactionsHeader: {
     flexDirection: "row",
