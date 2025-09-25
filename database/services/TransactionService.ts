@@ -7,6 +7,7 @@ export interface CreateTransactionData {
   amount: number;
   type: "income" | "expense";
   note?: string;
+  date?: Date;
 }
 
 class TransactionService {
@@ -19,6 +20,7 @@ class TransactionService {
   createTransaction(transactionData: CreateTransactionData): Transaction {
     try {
       const now = new Date();
+      const transactionDate = transactionData.date || now;
       const transaction = this.realm.write(() => {
         return this.realm.create<Transaction>("Transaction", {
           _id: new Realm.BSON.ObjectId(),
@@ -27,7 +29,7 @@ class TransactionService {
           amount: transactionData.amount,
           type: transactionData.type,
           note: transactionData.note || "",
-          createdAt: now,
+          createdAt: transactionDate,
           updatedAt: now,
         });
       });
@@ -124,6 +126,7 @@ class TransactionService {
           transaction.amount = updateData.amount;
         if (updateData.type) transaction.type = updateData.type;
         if (updateData.note !== undefined) transaction.note = updateData.note;
+        if (updateData.date) transaction.createdAt = updateData.date;
         transaction.updatedAt = new Date();
       });
 

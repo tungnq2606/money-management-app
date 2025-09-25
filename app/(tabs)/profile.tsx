@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import {
   Alert,
   Image,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -18,6 +19,28 @@ import {
 const ProfileScreen = () => {
   const { user, signOut } = useAuthStore();
   const { loadWallets } = useWalletStore();
+
+  const data_profile = [
+    {
+      id: 1,
+      title: "Wallet",
+      icon: () => <Ionicons name="wallet" size={24} color="#7F3DFF" />,
+      onPress: () => router.push("/wallet"),
+    },
+    {
+      id: 2,
+      title: "Category",
+      icon: () => <MaterialIcons name="category" size={24} color="#7F3DFF" />,
+      onPress: () => router.push("/category"),
+    },
+    {
+      id: 3,
+      title: "Logout",
+      icon: () => <MaterialIcons name="logout" size={24} color="red" />,
+      onPress: () => handleSignOut(),
+    },
+  ];
+
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
@@ -66,25 +89,21 @@ const ProfileScreen = () => {
       </View>
 
       <View style={styles.viewBody}>
-        {data_profile.map((item, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[
-              styles.touchItem,
-              {
-                borderBottomWidth: index === data_profile.length - 1 ? 0 : 1,
-                borderBottomColor: "#dcdcdcff",
-              },
-            ]}
-            onPress={() => {
-              if (item.title === "Wallet") {
-                router.push("/wallet");
-              } else if (item.title === "Logout") {
-                handleSignOut();
-              }
-            }}
-          >
-            {item?.icon === "wallet" ? (
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {data_profile.map((item, index) => (
+            <TouchableOpacity
+              key={index}
+              style={[
+                styles.touchItem,
+                {
+                  borderBottomWidth: index === data_profile.length - 1 ? 0 : 1,
+                  borderBottomColor: "#dcdcdcff",
+                },
+              ]}
+              onPress={() => {
+                item.onPress();
+              }}
+            >
               <View
                 style={[
                   styles.viewIcon,
@@ -93,23 +112,12 @@ const ProfileScreen = () => {
                   },
                 ]}
               >
-                <Ionicons name="wallet" size={24} color="#7F3DFF" />
+                {item?.icon()}
               </View>
-            ) : (
-              <View
-                style={[
-                  styles.viewIcon,
-                  {
-                    backgroundColor: "#FFE2E4",
-                  },
-                ]}
-              >
-                <MaterialIcons name="logout" size={24} color="red" />
-              </View>
-            )}
-            <Text style={styles.txtItem}>{item.title}</Text>
-          </TouchableOpacity>
-        ))}
+              <Text style={styles.txtItem}>{item.title}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
     </View>
   );
@@ -197,6 +205,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: "#fff",
     paddingHorizontal: 16,
+    flex: 1,
   },
   touchItem: {
     flexDirection: "row",
@@ -215,16 +224,3 @@ const styles = StyleSheet.create({
     padding: 16,
   },
 });
-
-const data_profile = [
-  {
-    id: 1,
-    title: "Wallet",
-    icon: "wallet",
-  },
-  {
-    id: 2,
-    title: "Logout",
-    icon: "logout",
-  },
-];

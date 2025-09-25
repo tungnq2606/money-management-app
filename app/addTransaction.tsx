@@ -23,10 +23,11 @@ import { useTransactionStore } from "../stores/transactionStore";
 const AddTransactionScreen = () => {
   const { type } = useLocalSearchParams<{ type: "income" | "expense" }>();
   const [amount, setAmount] = useState("");
-  const [description, setDescription] = useState("");
+  const [note, setNote] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [walletId, setWalletId] = useState("");
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   const user = useAuthStore((s) => s.user);
   const createTransaction = useTransactionStore((s) => s.createTransaction);
@@ -61,18 +62,18 @@ const AddTransactionScreen = () => {
 
   const handleSave = async () => {
     if (!user) {
-      Alert.alert("Error", "Bạn cần đăng nhập để thêm giao dịch");
+      Alert.alert("Error", "You need to log in to add a transaction");
       return;
     }
 
-    if (!amount || !description || !categoryId || !walletId) {
-      Alert.alert("Error", "Vui lòng điền đầy đủ thông tin");
+    if (!amount || !note || !categoryId || !walletId) {
+      Alert.alert("Error", "Please fill in all information");
       return;
     }
 
     const parsedAmount = parseFloat(amount);
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
-      Alert.alert("Error", "Số tiền không hợp lệ");
+      Alert.alert("Error", "Invalid amount");
       return;
     }
 
@@ -82,21 +83,22 @@ const AddTransactionScreen = () => {
         categoryId,
         amount: parsedAmount,
         type: isIncome ? "income" : "expense",
-        note: description,
+        note: note,
+        date: selectedDate,
       });
 
       if (ok) {
         Alert.alert(
-          "Thành công",
-          `${isIncome ? "Thu nhập" : "Chi tiêu"} đã được thêm!`,
+          "Success",
+          `${isIncome ? "Income" : "Expense"} has been added!`,
           [{ text: "OK", onPress: () => router.back() }]
         );
       } else {
-        Alert.alert("Error", "Không thể tạo giao dịch");
+        Alert.alert("Error", "Unable to create transaction");
       }
     } catch (e) {
       console.error(e);
-      Alert.alert("Error", "Đã xảy ra lỗi khi tạo giao dịch");
+      Alert.alert("Error", "An error occurred while creating the transaction");
     }
   };
 
@@ -104,6 +106,7 @@ const AddTransactionScreen = () => {
     router.back();
   };
 
+  console.log(amount);
   return (
     <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
       <SafeAreaView
@@ -130,11 +133,10 @@ const AddTransactionScreen = () => {
               <Text style={styles.currencySymbol}>$</Text>
               <TextInput
                 style={styles.amountInput}
-                value={amount}
+                value={formatNumber(Number(amount || 0))}
                 onChangeText={(text) => {
                   const digits = text.replace(/[^\d]/g, "");
-                  const formatted = digits ? formatNumber(Number(digits)) : "";
-                  setAmount(formatted);
+                  setAmount(digits);
                 }}
                 placeholder="0"
                 keyboardType="numeric"
@@ -148,12 +150,14 @@ const AddTransactionScreen = () => {
         <TransactionForm
           categoryId={categoryId}
           setCategoryId={setCategoryId}
-          description={description}
-          setDescription={setDescription}
+          note={note}
+          setNote={setNote}
           walletId={walletId}
           setWalletId={setWalletId}
           imageUri={imageUri}
           setImageUri={setImageUri}
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
           isIncome={isIncome}
           buttonColor={buttonColor}
           onSave={handleSave}

@@ -1,15 +1,16 @@
-import { useWalletStore } from "@/stores";
 import { AntDesign } from "@expo/vector-icons";
 // import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
 import {
   Modal,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import DateInput from "./DateInput";
 
 interface OptionItem {
   id: string;
@@ -19,12 +20,14 @@ interface OptionItem {
 interface TransactionFormProps {
   categoryId: string;
   setCategoryId: (value: string) => void;
-  description: string;
-  setDescription: (value: string) => void;
+  note: string;
+  setNote: (value: string) => void;
   walletId: string;
   setWalletId: (value: string) => void;
   imageUri: string | null;
   setImageUri: (uri: string | null) => void;
+  selectedDate: Date;
+  setSelectedDate: (date: Date) => void;
   isIncome: boolean;
   buttonColor: string;
   onSave: () => void;
@@ -35,12 +38,14 @@ interface TransactionFormProps {
 const TransactionForm: React.FC<TransactionFormProps> = ({
   categoryId,
   setCategoryId,
-  description,
-  setDescription,
+  note,
+  setNote,
   walletId,
   setWalletId,
   imageUri,
   setImageUri,
+  selectedDate,
+  setSelectedDate,
   isIncome,
   buttonColor,
   onSave,
@@ -49,7 +54,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
 }) => {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showWalletModal, setShowWalletModal] = useState(false);
-  const { wallets } = useWalletStore();
 
   const selectedCategoryName =
     categoryOptions.find((c) => c.id === categoryId)?.name || "";
@@ -136,13 +140,26 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
 
         {/* Description Input */}
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Description</Text>
+          <Text style={styles.inputLabel}>Note</Text>
           <TextInput
             style={styles.input}
-            value={description}
-            onChangeText={setDescription}
+            value={note}
+            onChangeText={setNote}
             placeholder="Add a note"
             placeholderTextColor="#C4C4C4"
+          />
+        </View>
+
+        {/* Date Input */}
+        <View style={styles.inputGroup}>
+          <DateInput
+            label="Date"
+            value={selectedDate}
+            onChange={setSelectedDate}
+            placeholder="Select date"
+            containerStyle={styles.dateInputContainer}
+            inputStyle={styles.dateInput}
+            textStyle={styles.dateInputText}
           />
         </View>
 
@@ -210,18 +227,20 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 <AntDesign name="close" size={24} color="#000" />
               </TouchableOpacity>
             </View>
-            {categoryOptions.map((item, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.modalItem}
-                onPress={() => {
-                  setCategoryId(item.id);
-                  setShowCategoryModal(false);
-                }}
-              >
-                <Text style={styles.modalItemText}>{item.name}</Text>
-              </TouchableOpacity>
-            ))}
+            <ScrollView>
+              {categoryOptions.map((item, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.modalItem}
+                  onPress={() => {
+                    setCategoryId(item.id);
+                    setShowCategoryModal(false);
+                  }}
+                >
+                  <Text style={styles.modalItemText}>{item.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -241,18 +260,20 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 <AntDesign name="close" size={24} color="#000" />
               </TouchableOpacity>
             </View>
-            {walletOptions.map((item, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.modalItem}
-                onPress={() => {
-                  setWalletId(item.id);
-                  setShowWalletModal(false);
-                }}
-              >
-                <Text style={styles.modalItemText}>{item.name}</Text>
-              </TouchableOpacity>
-            ))}
+            <ScrollView>
+              {walletOptions.map((item, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.modalItem}
+                  onPress={() => {
+                    setWalletId(item.id);
+                    setShowWalletModal(false);
+                  }}
+                >
+                  <Text style={styles.modalItemText}>{item.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -364,8 +385,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    paddingBottom: 40,
-    maxHeight: "70%",
+    height: "90%",
   },
   modalHeader: {
     flexDirection: "row",
@@ -387,6 +407,21 @@ const styles = StyleSheet.create({
     borderBottomColor: "#F5F5F5",
   },
   modalItemText: {
+    fontSize: 16,
+    color: "#000",
+  },
+  dateInputContainer: {
+    marginBottom: 0,
+  },
+  dateInput: {
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: "#FAFAFA",
+  },
+  dateInputText: {
     fontSize: 16,
     color: "#000",
   },
