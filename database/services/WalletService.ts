@@ -156,6 +156,23 @@ class WalletService {
       throw error;
     }
   }
+
+  // Delete all wallets except for a specific user
+  deleteAllWalletsExceptUser(userId: string): void {
+    try {
+      this.realm.write(() => {
+        const walletsToDelete = this.realm
+          .objects<Wallet>("Wallet")
+          .filtered("userId != $0", userId);
+
+        this.realm.delete(walletsToDelete);
+      });
+      console.log("All wallets except user's deleted");
+    } catch (error) {
+      console.error("Error deleting wallets except user:", error);
+      throw error;
+    }
+  }
 }
 
 export default WalletService;

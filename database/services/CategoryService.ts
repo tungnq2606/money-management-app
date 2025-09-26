@@ -172,6 +172,23 @@ class CategoryService {
       throw error;
     }
   }
+
+  // Delete all categories except for a specific user
+  deleteAllCategoriesExceptUser(userId: string): void {
+    try {
+      this.realm.write(() => {
+        const categoriesToDelete = this.realm
+          .objects<Category>("Category")
+          .filtered("userId != $0", userId);
+
+        this.realm.delete(categoriesToDelete);
+      });
+      console.log("All categories except user's deleted");
+    } catch (error) {
+      console.error("Error deleting categories except user:", error);
+      throw error;
+    }
+  }
 }
 
 export default CategoryService;

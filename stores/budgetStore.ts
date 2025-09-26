@@ -13,6 +13,14 @@ interface BudgetState {
 interface BudgetActions {
   loadBudgetsByWallet: (walletId: string) => Promise<void>;
   loadBudgetsByCategory: (categoryId: string) => Promise<void>;
+  loadBudgetsByUserId: (userId: string) => Promise<void>;
+  loadBudgetsByUserIdWithSpending: (userId: string) => Promise<void>;
+  loadBudgetsByUserIdWithSpendingInRange: (
+    userId: string,
+    startDate: Date,
+    endDate: Date
+  ) => Promise<void>;
+  loadBudgetById: (budgetId: string) => Promise<Budget | null>;
   loadActiveBudgets: () => Promise<void>;
   loadAllBudgets: () => Promise<void>;
   createBudget: (budgetData: CreateBudgetData) => Promise<boolean>;
@@ -67,6 +75,95 @@ export const useBudgetStore = create<BudgetStore>((set, get) => ({
           error instanceof Error ? error.message : "Failed to load budgets",
         isLoading: false,
       });
+    }
+  },
+
+  loadBudgetsByUserId: async (userId: string) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const budgets = getGlobalBudgetService().getBudgetsByUserId(userId);
+      set({ budgets, isLoading: false });
+    } catch (error) {
+      console.error("Load budgets by user ID error:", error);
+      set({
+        error:
+          error instanceof Error ? error.message : "Failed to load budgets",
+        isLoading: false,
+      });
+    }
+  },
+
+  loadBudgetsByUserIdWithSpending: async (userId: string) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const budgetsWithSpending =
+        getGlobalBudgetService().getBudgetsByUserIdWithSpending(userId);
+      // Update budget.remain with calculated values and store them
+      const budgets = budgetsWithSpending.map((item) => {
+        const budget = { ...item.budget };
+        budget.remain = item.remain; // Use calculated remain value
+        return budget;
+      });
+      set({ budgets, isLoading: false });
+    } catch (error) {
+      console.error("Load budgets by user ID with spending error:", error);
+      set({
+        error:
+          error instanceof Error ? error.message : "Failed to load budgets",
+        isLoading: false,
+      });
+    }
+  },
+
+  loadBudgetsByUserIdWithSpendingInRange: async (
+    userId: string,
+    startDate: Date,
+    endDate: Date
+  ) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const budgetsWithSpending =
+        getGlobalBudgetService().getBudgetsByUserIdWithSpendingInRange(
+          userId,
+          startDate,
+          endDate
+        );
+      // Update budget.remain with calculated values and store them
+      const budgets = budgetsWithSpending.map((item) => {
+        const budget = { ...item.budget };
+        budget.remain = item.remain; // Use calculated remain value
+        return budget;
+      });
+      set({ budgets, isLoading: false });
+    } catch (error) {
+      console.error(
+        "Load budgets by user ID with spending in range error:",
+        error
+      );
+      set({
+        error:
+          error instanceof Error ? error.message : "Failed to load budgets",
+        isLoading: false,
+      });
+    }
+  },
+
+  loadBudgetById: async (budgetId: string): Promise<Budget | null> => {
+    try {
+      const budget = getGlobalBudgetService().getBudgetById(budgetId);
+      if (budget) {
+        set({ selectedBudget: budget });
+      }
+      return budget;
+    } catch (error) {
+      console.error("Load budget by ID error:", error);
+      set({
+        error: error instanceof Error ? error.message : "Failed to load budget",
+      });
+      return null;
     }
   },
 

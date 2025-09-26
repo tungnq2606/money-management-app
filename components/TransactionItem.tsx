@@ -1,7 +1,8 @@
-import AntDesign from "@expo/vector-icons/AntDesign";
-import React from "react";
-import { StyleSheet, Text, View } from "react-native";
 import { formatMoney } from "@/constants/formatMoney";
+import AntDesign from "@expo/vector-icons/AntDesign";
+import { router } from "expo-router";
+import React from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface TransactionItemProps {
   id: string;
@@ -14,6 +15,7 @@ interface TransactionItemProps {
 }
 
 const TransactionItem: React.FC<TransactionItemProps> = ({
+  id,
   type,
   description,
   amount,
@@ -23,8 +25,12 @@ const TransactionItem: React.FC<TransactionItemProps> = ({
 }) => {
   const isIncome = amount > 0;
 
+  const handlePress = () => {
+    router.push(`/transactionDetail?id=${id}`);
+  };
+
   return (
-    <View style={styles.item}>
+    <TouchableOpacity style={styles.item} onPress={handlePress}>
       <View style={[styles.iconWrapper, { backgroundColor: color }]}>
         <AntDesign name={icon as any} size={20} color="#000" />
       </View>
@@ -44,7 +50,11 @@ const TransactionItem: React.FC<TransactionItemProps> = ({
         </Text>
         <Text style={styles.time}>{time}</Text>
       </View>
-    </View>
+
+      <View style={styles.arrowContainer}>
+        <AntDesign name="right" size={16} color="#C4C4C4" />
+      </View>
+    </TouchableOpacity>
   );
 };
 
@@ -98,6 +108,11 @@ const styles = StyleSheet.create({
   time: {
     fontSize: 12,
     color: "#999",
+  },
+  arrowContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 8,
   },
 });
 

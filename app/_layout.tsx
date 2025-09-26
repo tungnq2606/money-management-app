@@ -31,6 +31,7 @@ function AuthNavigator() {
       <Stack.Screen name="budgetDetail" />
       <Stack.Screen name="budgetForm" />
       <Stack.Screen name="notification" />
+      <Stack.Screen name="editTransaction" />
       <Stack.Screen name="+not-found" />
     </Stack>
   );

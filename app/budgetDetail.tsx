@@ -13,10 +13,8 @@ import {
 } from "react-native";
 import HeaderApp from "../components/HeaderApp";
 import { formatMoney } from "../constants/formatMoney";
-import {
-  getGlobalBudgetService,
-  getGlobalCategoryService,
-} from "../database/services";
+import { getGlobalCategoryService } from "../database/services";
+import { useBudgetStore } from "../stores/budgetStore";
 
 type BudgetView = {
   id: string;
@@ -33,6 +31,7 @@ type BudgetView = {
 export default function BudgetDetail() {
   const params = useLocalSearchParams<{ id?: string }>();
   const budgetId = params?.id as string | undefined;
+  const { loadBudgetById, deleteBudget } = useBudgetStore();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,43 +40,47 @@ export default function BudgetDetail() {
   const [deleteVisible, setDeleteVisible] = useState(false);
 
   useEffect(() => {
-    try {
-      if (!budgetId) {
-        setError("Missing budget id");
+    const loadBudget = async () => {
+      try {
+        if (!budgetId) {
+          setError("Missing budget id");
+          setLoading(false);
+          return;
+        }
+
+        const found = await loadBudgetById(budgetId);
+        if (!found) {
+          setError("Budget not found");
+          setLoading(false);
+          return;
+        }
+
+        setBudget({
+          id: found._id.toString(),
+          name: found.name,
+          amount: found.amount,
+          remain: found.remain,
+          categoryId: found.categoryId,
+          fromDate: found.fromDate,
+          toDate: found.toDate,
+          note: found.note,
+          loop: found.loop,
+        });
+
+        const category = getGlobalCategoryService().getCategoryById(
+          found.categoryId
+        );
+        if (category) setCategoryName(category.name);
         setLoading(false);
-        return;
-      }
-
-      const found = getGlobalBudgetService().getBudgetById(budgetId);
-      if (!found) {
-        setError("Budget not found");
+      } catch (e) {
+        console.error(e);
+        setError("Failed to load budget");
         setLoading(false);
-        return;
       }
+    };
 
-      setBudget({
-        id: found._id.toString(),
-        name: found.name,
-        amount: found.amount,
-        remain: found.remain,
-        categoryId: found.categoryId,
-        fromDate: found.fromDate,
-        toDate: found.toDate,
-        note: found.note,
-        loop: found.loop,
-      });
-
-      const category = getGlobalCategoryService().getCategoryById(
-        found.categoryId
-      );
-      if (category) setCategoryName(category.name);
-      setLoading(false);
-    } catch (e) {
-      console.error(e);
-      setError("Failed to load budget");
-      setLoading(false);
-    }
-  }, [budgetId]);
+    loadBudget();
+  }, [budgetId, loadBudgetById]);
 
   const exceeded = useMemo(
     () => (budget ? budget.remain <= 0 : false),
@@ -101,12 +104,16 @@ export default function BudgetDetail() {
     setDeleteVisible(true);
   };
 
-  const onDelete = () => {
+  const onDelete = async () => {
     if (!budget) return;
     try {
-      getGlobalBudgetService().deleteBudget(budget.id);
-      setDeleteVisible(false);
-      router.back();
+      const success = await deleteBudget(budget.id);
+      if (success) {
+        setDeleteVisible(false);
+        router.back();
+      } else {
+        Alert.alert("Error", "Failed to delete budget");
+      }
     } catch (e) {
       console.error(e);
       Alert.alert("Error", "Failed to delete budget");

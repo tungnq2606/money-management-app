@@ -66,6 +66,11 @@ const SpendFrequencyChart: React.FC<SpendFrequencyChartProps> = ({
           disableScroll={true}
           initialSpacing={0}
           spacing={Math.max((width - 60) / Math.max(data.length - 1, 1), 10)}
+          yAxisThickness={0}
+          xAxisThickness={0}
+          noOfSections={4}
+          maxValue={Math.max(...data.map((d) => Math.abs(d.value))) * 1.2}
+          minValue={Math.min(...data.map((d) => d.value)) * 1.2}
         />
       </View>
       <View style={styles.buttonContainer}>

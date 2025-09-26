@@ -1,4 +1,5 @@
 import HeaderApp from "@/components/HeaderApp";
+import { deleteAllDataExceptUser } from "@/database/services";
 import { useWalletStore } from "@/stores";
 import { useAuthStore } from "@/stores/authStore";
 import Feather from "@expo/vector-icons/Feather";
@@ -42,10 +43,13 @@ const ProfileScreen = () => {
   ];
 
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [avatarTapCount, setAvatarTapCount] = useState(0);
 
   useEffect(() => {
-    loadWallets(String(user?._id));
-  }, []);
+    if (user?._id) {
+      loadWallets(String(user._id));
+    }
+  }, [loadWallets, user?._id]);
 
   const handleSignOut = () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -69,16 +73,76 @@ const ProfileScreen = () => {
     ]);
   };
 
+  const handleAvatarTap = () => {
+    const newCount = avatarTapCount + 1;
+    setAvatarTapCount(newCount);
+
+    if (newCount >= 7) {
+      setAvatarTapCount(0);
+      handleDeleteAllData();
+    } else {
+      // Reset counter after 3 seconds
+      setTimeout(() => {
+        setAvatarTapCount(0);
+      }, 3000);
+    }
+  };
+
+  const handleDeleteAllData = () => {
+    Alert.alert(
+      "⚠️ DANGER ZONE ⚠️",
+      "Bạn có chắc chắn muốn xóa TẤT CẢ dữ liệu trong ứng dụng (trừ thông tin user)?\n\nHành động này KHÔNG THỂ HOÀN TÁC!\n\nTất cả giao dịch, ví, danh mục, ngân sách và thông báo sẽ bị xóa vĩnh viễn.",
+      [
+        { text: "Hủy", style: "cancel" },
+        {
+          text: "XÓA TẤT CẢ",
+          style: "destructive",
+          onPress: () => {
+            Alert.alert(
+              "Xác nhận cuối cùng",
+              "Bạn thực sự muốn xóa tất cả dữ liệu?",
+              [
+                { text: "Không", style: "cancel" },
+                {
+                  text: "CÓ, XÓA NGAY",
+                  style: "destructive",
+                  onPress: () => {
+                    try {
+                      deleteAllDataExceptUser(String(user?._id));
+                      Alert.alert(
+                        "Thành công",
+                        "Đã xóa tất cả dữ liệu trừ thông tin user."
+                      );
+                    } catch (error) {
+                      console.error("Error deleting data:", error);
+                      Alert.alert(
+                        "Lỗi",
+                        "Không thể xóa dữ liệu. Vui lòng thử lại."
+                      );
+                    }
+                  },
+                },
+              ]
+            );
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <View style={styles.container}>
       <HeaderApp title={"Profile"} />
       <View style={styles.header}>
-        <View style={styles.avatarContainer}>
+        <TouchableOpacity
+          style={styles.avatarContainer}
+          onPress={handleAvatarTap}
+        >
           <Image
             source={{ uri: "https://i.pravatar.cc/150?img=4" }}
             style={{ width: 90, height: 90, borderRadius: 45 }}
           />
-        </View>
+        </TouchableOpacity>
         <View style={styles.userNameContainer}>
           <Text style={styles.userName}>Username</Text>
           <Text style={styles.txtName}>{user?.name}</Text>
