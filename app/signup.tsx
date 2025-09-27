@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import DateInput from "../components/DateInput";
 import FormInput from "../components/FormInput";
 import { useAuthStore } from "../stores/authStore";
@@ -94,110 +95,112 @@ export default function SignUpScreen() {
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>
-            Start managing your finances today
-          </Text>
-        </View>
-
-        <View style={styles.form}>
-          <FormInput
-            label="Full Name"
-            placeholder="Enter your full name"
-            value={name}
-            onChangeText={setName}
-            autoCapitalize="words"
-            autoCorrect={false}
-            containerStyle={styles.inputContainer}
-          />
-
-          <FormInput
-            label="Email"
-            placeholder="Enter your email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            containerStyle={styles.inputContainer}
-          />
-
-          <FormInput
-            label="Password"
-            placeholder="Enter your password (min 6 characters)"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            autoCapitalize="none"
-            autoCorrect={false}
-            containerStyle={styles.inputContainer}
-          />
-
-          <FormInput
-            label="Confirm Password"
-            placeholder="Confirm your password"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            secureTextEntry
-            autoCapitalize="none"
-            autoCorrect={false}
-            containerStyle={styles.inputContainer}
-          />
-
-          <DateInput
-            label="Birthday"
-            value={birthday || null}
-            maximumDate={new Date()}
-            onChange={(date) => {
-              const year = date.getFullYear();
-              const month = String(date.getMonth() + 1).padStart(2, "0");
-              const day = String(date.getDate()).padStart(2, "0");
-              setBirthday(`${year}-${month}-${day}`);
-            }}
-            containerStyle={styles.inputContainer}
-          />
-
-          <FormInput
-            label="Phone Number"
-            placeholder="Enter your phone number"
-            value={phoneNumber}
-            onChangeText={setPhoneNumber}
-            keyboardType="phone-pad"
-            autoCapitalize="none"
-            autoCorrect={false}
-            containerStyle={styles.inputContainer}
-          />
-
-          <FormInput
-            label="Address"
-            placeholder="Enter your address"
-            value={address}
-            onChangeText={setAddress}
-            autoCapitalize="words"
-            autoCorrect={false}
-            containerStyle={styles.inputContainer}
-          />
-
-          <TouchableOpacity
-            style={[styles.signUpButton, isLoading && styles.buttonDisabled]}
-            onPress={handleSignUp}
-            disabled={isLoading}
-          >
-            <Text style={styles.signUpButtonText}>
-              {isLoading ? "Creating Account..." : "Create Account"}
+      <SafeAreaView>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.header}>
+            <Text style={styles.title}>Create Account</Text>
+            <Text style={styles.subtitle}>
+              Start managing your finances today
             </Text>
-          </TouchableOpacity>
-
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>Already have an account? </Text>
-            <TouchableOpacity onPress={() => router.push("/signin")}>
-              <Text style={styles.signInLink}>Sign In</Text>
-            </TouchableOpacity>
           </View>
-        </View>
-      </ScrollView>
+
+          <View style={styles.form}>
+            <FormInput
+              label="Full Name"
+              placeholder="Enter your full name"
+              value={name}
+              onChangeText={setName}
+              autoCapitalize="words"
+              autoCorrect={false}
+              containerStyle={styles.inputContainer}
+            />
+
+            <FormInput
+              label="Email"
+              placeholder="Enter your email"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              containerStyle={styles.inputContainer}
+            />
+
+            <FormInput
+              label="Password"
+              placeholder="Enter your password (min 6 characters)"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+              containerStyle={styles.inputContainer}
+            />
+
+            <FormInput
+              label="Confirm Password"
+              placeholder="Confirm your password"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+              containerStyle={styles.inputContainer}
+            />
+
+            <DateInput
+              label="Birthday"
+              value={birthday || null}
+              maximumDate={new Date()}
+              onChange={(date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, "0");
+                const day = String(date.getDate()).padStart(2, "0");
+                setBirthday(`${year}-${month}-${day}`);
+              }}
+              containerStyle={styles.inputContainer}
+            />
+
+            <FormInput
+              label="Phone Number"
+              placeholder="Enter your phone number"
+              value={phoneNumber}
+              onChangeText={setPhoneNumber}
+              keyboardType="phone-pad"
+              autoCapitalize="none"
+              autoCorrect={false}
+              containerStyle={styles.inputContainer}
+            />
+
+            <FormInput
+              label="Address"
+              placeholder="Enter your address"
+              value={address}
+              onChangeText={setAddress}
+              autoCapitalize="words"
+              autoCorrect={false}
+              containerStyle={styles.inputContainer}
+            />
+
+            <TouchableOpacity
+              style={[styles.signUpButton, isLoading && styles.buttonDisabled]}
+              onPress={handleSignUp}
+              disabled={isLoading}
+            >
+              <Text style={styles.signUpButtonText}>
+                {isLoading ? "Creating Account..." : "Create Account"}
+              </Text>
+            </TouchableOpacity>
+
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>Already have an account? </Text>
+              <TouchableOpacity onPress={() => router.push("/signin")}>
+                <Text style={styles.signInLink}>Sign In</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
     </KeyboardAvoidingView>
   );
 }

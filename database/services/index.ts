@@ -97,6 +97,56 @@ export const getGlobalNotificationService = (): NotificationService => {
   return new NotificationService(getGlobalRealm());
 };
 
+// Function to delete all data except user data
+export const deleteAllDataExceptUser = (userId: string): void => {
+  try {
+    const realm = getGlobalRealm();
+
+    realm.write(() => {
+      // Delete all transactions except user's
+      const userWallets = realm
+        .objects("Wallet")
+        .filtered("userId == $0", userId);
+
+      const userWalletIds = Array.from(userWallets).map((wallet: any) =>
+        wallet._id.toString()
+      );
+
+      const transactionsToDelete = realm
+        .objects("Transaction")
+        .filtered("NOT walletId IN $0", userWalletIds);
+      realm.delete(transactionsToDelete);
+
+      // Delete all wallets except user's
+      const walletsToDelete = realm
+        .objects("Wallet")
+        .filtered("userId != $0", userId);
+      realm.delete(walletsToDelete);
+
+      // Delete all categories except user's
+      const categoriesToDelete = realm
+        .objects("Category")
+        .filtered("userId != $0", userId);
+      realm.delete(categoriesToDelete);
+
+      // Delete all budgets except user's
+      const budgetsToDelete = realm
+        .objects("Budget")
+        .filtered("userId != $0", userId);
+      realm.delete(budgetsToDelete);
+
+      // Delete all notifications (they are global)
+      const notificationsToDelete = realm.objects("Notification");
+      realm.delete(notificationsToDelete);
+    });
+
+    console.log("All data except user data deleted successfully");
+  } catch (error) {
+    console.error("Error deleting all data except user:", error);
+    throw error;
+  }
+};
+
 // Export service classes for type checking
 export {
   BudgetService,

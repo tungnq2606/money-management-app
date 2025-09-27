@@ -33,6 +33,9 @@ interface TransactionFormProps {
   onSave: () => void;
   categoryOptions: OptionItem[];
   walletOptions: OptionItem[];
+  isEditMode?: boolean;
+  transactionType?: "income" | "expense";
+  setTransactionType?: (type: "income" | "expense") => void;
 }
 
 const TransactionForm: React.FC<TransactionFormProps> = ({
@@ -51,6 +54,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   onSave,
   categoryOptions,
   walletOptions,
+  isEditMode = false,
+  transactionType,
+  setTransactionType,
 }) => {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showWalletModal, setShowWalletModal] = useState(false);
@@ -119,6 +125,48 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   return (
     <View style={styles.container}>
       <View style={styles.inputSection}>
+        {/* Transaction Type Selector (only in edit mode) */}
+        {isEditMode && transactionType && setTransactionType && (
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Transaction Type</Text>
+            <View style={styles.typeSelector}>
+              <TouchableOpacity
+                style={[
+                  styles.typeButton,
+                  transactionType === "income" && styles.typeButtonActive,
+                ]}
+                onPress={() => setTransactionType("income")}
+              >
+                <Text
+                  style={[
+                    styles.typeButtonText,
+                    transactionType === "income" && styles.typeButtonTextActive,
+                  ]}
+                >
+                  Income
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.typeButton,
+                  transactionType === "expense" && styles.typeButtonActive,
+                ]}
+                onPress={() => setTransactionType("expense")}
+              >
+                <Text
+                  style={[
+                    styles.typeButtonText,
+                    transactionType === "expense" &&
+                      styles.typeButtonTextActive,
+                  ]}
+                >
+                  Expense
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
         {/* Category Dropdown */}
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Category</Text>
@@ -209,7 +257,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         style={[styles.saveButton, { backgroundColor: buttonColor }]}
         onPress={onSave}
       >
-        <Text style={styles.saveButtonText}>Continue</Text>
+        <Text style={styles.saveButtonText}>
+          {isEditMode ? "Update" : "Continue"}
+        </Text>
       </TouchableOpacity>
 
       {/* Category Modal */}
@@ -424,6 +474,30 @@ const styles = StyleSheet.create({
   dateInputText: {
     fontSize: 16,
     color: "#000",
+  },
+  typeSelector: {
+    flexDirection: "row",
+    borderRadius: 12,
+    backgroundColor: "#F5F5F5",
+    padding: 4,
+  },
+  typeButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  typeButtonActive: {
+    backgroundColor: "#007AFF",
+  },
+  typeButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#666",
+  },
+  typeButtonTextActive: {
+    color: "#FFFFFF",
   },
 });
 

@@ -1,4 +1,5 @@
 import HeaderApp from "@/components/HeaderApp";
+import { Ionicons } from "@expo/vector-icons";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -97,13 +98,13 @@ const CategoryManagementScreen = () => {
           style={styles.editButton}
           onPress={() => handleEditCategory(item)}
         >
-          <AntDesign name="edit" size={20} color="#007AFF" />
+          <AntDesign name="edit" size={18} color="#7F3DFF" />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.deleteButton}
           onPress={() => handleDeleteCategory(item._id.toString(), item.name)}
         >
-          <AntDesign name="delete" size={20} color="#FF3B30" />
+          <Ionicons name="trash-bin-sharp" size={18} color="red" />
         </TouchableOpacity>
       </View>
     </View>
@@ -127,15 +128,7 @@ const CategoryManagementScreen = () => {
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       {/* Header */}
-      <HeaderApp
-        title={"Category Management"}
-        isBack={true}
-        rightComponent={
-          <TouchableOpacity onPress={() => router.push("/addCategory" as any)}>
-            <AntDesign name="plus" size={24} color="#007AFF" />
-          </TouchableOpacity>
-        }
-      />
+      <HeaderApp title={"Category Management"} isBack={true} />
 
       {/* Type Selector */}
       <View style={styles.typeSelector}>
@@ -182,6 +175,14 @@ const CategoryManagementScreen = () => {
         ListEmptyComponent={renderEmptyState}
         showsVerticalScrollIndicator={false}
       />
+      <View style={styles.viewAdd}>
+        <TouchableOpacity
+          style={styles.btnAdd}
+          onPress={() => router.push("/addCategory")}
+        >
+          <Text style={styles.txtAdd}>+ Add new category</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
@@ -242,7 +243,7 @@ const styles = StyleSheet.create({
     color: "#8E8E93",
   },
   typeButtonTextActive: {
-    color: "#007AFF",
+    color: "#7F3DFF",
   },
   listContainer: {
     paddingHorizontal: 16,
@@ -286,9 +287,15 @@ const styles = StyleSheet.create({
   editButton: {
     padding: 8,
     marginRight: 8,
+    borderWidth: 1,
+    borderColor: "#7F3DFF",
+    borderRadius: 8,
   },
   deleteButton: {
     padding: 8,
+    borderWidth: 1,
+    borderColor: "red",
+    borderRadius: 8,
   },
   emptyState: {
     flex: 1,
@@ -304,7 +311,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   addFirstButton: {
-    backgroundColor: "#007AFF",
+    backgroundColor: "#7F3DFF",
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -313,6 +320,30 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
+  },
+  viewAdd: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: "#fff",
+    borderTopWidth: 1,
+    borderTopColor: "#F3F4F6",
+  },
+  btnAdd: {
+    backgroundColor: "#7F3DFF",
+    paddingVertical: 16,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#7F3DFF",
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  txtAdd: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#fff",
   },
 });
 

@@ -142,6 +142,19 @@ const Wallet = () => {
                 <AntDesign name="close" size={24} color="#000" />
               </TouchableOpacity>
             </View>
+
+            <TouchableOpacity
+              style={styles.modalItem}
+              onPress={() => {
+                router.push({
+                  pathname: "/addWallet",
+                  params: { walletId: itemSelected?._id },
+                });
+                setModalVisible(false);
+              }}
+            >
+              <Text>Edit</Text>
+            </TouchableOpacity>
             <TouchableOpacity
               style={styles.modalItem}
               onPress={() => {
@@ -163,18 +176,6 @@ const Wallet = () => {
               }}
             >
               <Text>Delete</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.modalItem}
-              onPress={() => {
-                router.push({
-                  pathname: "/addWallet",
-                  params: { walletId: itemSelected?._id },
-                });
-                setModalVisible(false);
-              }}
-            >
-              <Text>Edit</Text>
             </TouchableOpacity>
           </View>
         </View>

@@ -120,7 +120,7 @@ export default function TransactionScreen() {
         keyExtractor={(item) => item.id}
         renderItem={_renderItem}
         renderSectionHeader={renderSectionHeader}
-        contentContainerStyle={{ flex: 1, flexGrow: 1, padding: 16 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
         refreshing={isLoading}
         onRefresh={() => loadTransactionsWithFilters({})}
         ListEmptyComponent={

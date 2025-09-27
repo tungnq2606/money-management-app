@@ -192,6 +192,23 @@ class BudgetService {
     }
   }
 
+  // Delete all budgets except for a specific user
+  deleteAllBudgetsExceptUser(userId: string): void {
+    try {
+      this.realm.write(() => {
+        const budgetsToDelete = this.realm
+          .objects<Budget>("Budget")
+          .filtered("userId != $0", userId);
+
+        this.realm.delete(budgetsToDelete);
+      });
+      console.log("All budgets except user's deleted");
+    } catch (error) {
+      console.error("Error deleting budgets except user:", error);
+      throw error;
+    }
+  }
+
   // Get budgets for a user and compute spent from transactions, updating remain
   getBudgetsByUserIdWithSpending(userId: string): {
     budget: Budget;

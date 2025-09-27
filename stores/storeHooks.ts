@@ -82,6 +82,12 @@ export const useTransactionActions = () => {
     deleteTransaction: async (transactionId: string) => {
       return await store.deleteTransaction(transactionId);
     },
+    refreshTransactions: async () => {
+      return await store.refreshTransactions();
+    },
+    getTransactionById: (id: string) => {
+      return store.getTransactionById(id);
+    },
   };
 };
 

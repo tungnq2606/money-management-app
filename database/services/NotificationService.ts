@@ -195,6 +195,22 @@ class NotificationService {
     }
   }
 
+  // Delete all notifications (notifications are global, not user-specific)
+  deleteAllNotificationsExceptUser(): number {
+    try {
+      const notifications = this.getAllNotifications();
+
+      this.realm.write(() => {
+        this.realm.delete(notifications);
+      });
+
+      return notifications.length;
+    } catch (error) {
+      console.error("Error deleting all notifications:", error);
+      throw error;
+    }
+  }
+
   getNotificationCount(): { total: number; unread: number } {
     try {
       const total = this.realm.objects<Notification>("Notification").length;

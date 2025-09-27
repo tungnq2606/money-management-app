@@ -1,6 +1,7 @@
 import Realm from "realm";
 import { Category } from "../schemas/Category";
 import { Transaction } from "../schemas/Transaction";
+import { Wallet } from "../schemas/Wallet";
 
 export interface CreateTransactionData {
   walletId: string;
@@ -409,6 +410,33 @@ class TransactionService {
       console.log("All transactions deleted");
     } catch (error) {
       console.error("Error deleting all transactions:", error);
+      throw error;
+    }
+  }
+
+  // Delete all transactions except for a specific user
+  deleteAllTransactionsExceptUser(userId: string): void {
+    try {
+      this.realm.write(() => {
+        // Get all wallets for the user
+        const userWallets = this.realm
+          .objects<Wallet>("Wallet")
+          .filtered("userId == $0", userId);
+
+        const userWalletIds = Array.from(userWallets).map((wallet) =>
+          wallet._id.toString()
+        );
+
+        // Delete all transactions that don't belong to user's wallets
+        const transactionsToDelete = this.realm
+          .objects<Transaction>("Transaction")
+          .filtered("NOT walletId IN $0", userWalletIds);
+
+        this.realm.delete(transactionsToDelete);
+      });
+      console.log("All transactions except user's deleted");
+    } catch (error) {
+      console.error("Error deleting transactions except user:", error);
       throw error;
     }
   }

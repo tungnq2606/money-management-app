@@ -15,8 +15,8 @@ import {
 import HeaderApp from "../../components/HeaderApp";
 import { months } from "../../constants";
 import { formatMoney, formatNumber } from "../../constants/formatMoney";
-import { getGlobalBudgetService } from "../../database/services";
 import { useAuthStore } from "../../stores/authStore";
+import { useBudgetStore } from "../../stores/budgetStore";
 
 if (
   Platform.OS === "android" &&
@@ -27,8 +27,7 @@ if (
 
 export default function BudgetListScreen() {
   const { user } = useAuthStore();
-
-  const [budgets, setBudgets] = React.useState<any[]>([]);
+  const { budgets, loadBudgetsByUserIdWithSpendingInRange } = useBudgetStore();
 
   const [monthIndex, setMonthIndex] = React.useState(new Date().getMonth());
 
@@ -42,29 +41,19 @@ export default function BudgetListScreen() {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
   };
 
-  const loadBudgets = React.useCallback(() => {
+  const loadBudgets = React.useCallback(async () => {
     if (!user) return;
     const now = new Date();
     const year = now.getFullYear();
     const startDate = new Date(year, monthIndex, 1, 0, 0, 0, 0);
     const endDate = new Date(year, monthIndex + 1, 0, 23, 59, 59, 999);
 
-    const items =
-      getGlobalBudgetService().getBudgetsByUserIdWithSpendingInRange(
-        user._id.toString(),
-        startDate,
-        endDate
-      );
-    const palette = ["#7F3DFF", "#4D7CFE", "#FDBC10", "#FF4D4F", "#22C55E"];
-    const mapped = items.map((item, idx) => ({
-      id: item.budget._id.toString(),
-      name: item.budget.name,
-      color: palette[idx % palette.length],
-      spent: item.spent,
-      limit: item.budget.amount,
-    }));
-    setBudgets(mapped);
-  }, [user, monthIndex]);
+    await loadBudgetsByUserIdWithSpendingInRange(
+      user._id.toString(),
+      startDate,
+      endDate
+    );
+  }, [user, monthIndex, loadBudgetsByUserIdWithSpendingInRange]);
 
   React.useEffect(() => {
     loadBudgets();
@@ -120,10 +109,14 @@ export default function BudgetListScreen() {
     </View>
   );
 
-  const renderItem = ({ item }: any) => {
-    const percentage = Math.min(1, item.spent / item.limit);
-    const exceeded = item.spent >= item.limit;
-    const remaining = Math.max(0, item.limit - item.spent);
+  const renderItem = ({ item, index }: { item: any; index: number }) => {
+    const palette = ["#7F3DFF", "#4D7CFE", "#FDBC10", "#FF4D4F", "#22C55E"];
+    const color = palette[index % palette.length];
+    const spent = Math.max(0, (item.amount || 0) - (item.remain || 0));
+    const percentage = Math.min(1, spent / item.amount);
+    const exceeded = spent >= item.amount;
+    const remaining = Math.max(0, item.amount - spent);
+
     return (
       <TouchableOpacity
         style={styles.card}
@@ -131,14 +124,14 @@ export default function BudgetListScreen() {
           router.push({
             pathname: "/budgetDetail",
             params: {
-              id: item.id,
+              id: item._id.toString(),
             },
           })
         }
       >
         <View style={styles.cardHeader}>
           <View style={styles.tag}>
-            <View style={[styles.tagDot, { backgroundColor: item.color }]} />
+            <View style={[styles.tagDot, { backgroundColor: color }]} />
             <Text style={styles.tagText}>{item.name}</Text>
           </View>
           {exceeded ? (
@@ -158,17 +151,17 @@ export default function BudgetListScreen() {
           <View
             style={[
               styles.progressFill,
-              { width: `${percentage * 100}%`, backgroundColor: item.color },
+              { width: `${percentage * 100}%`, backgroundColor: color },
             ]}
           />
         </View>
 
         <Text style={styles.subAmount}>
-          {`$${formatNumber(item.spent)} of $${formatNumber(item.limit)}`}
+          {`$${formatNumber(spent)} of $${formatNumber(item.amount)}`}
         </Text>
 
         {exceeded && (
-          <Text style={styles.warningText}>You’ve exceed the limit!</Text>
+          <Text style={styles.warningText}>You&apos;ve exceed the limit!</Text>
         )}
       </TouchableOpacity>
     );
@@ -193,7 +186,7 @@ export default function BudgetListScreen() {
       ) : (
         <FlatList
           data={budgets}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item._id.toString()}
           renderItem={renderItem}
           contentContainerStyle={{ paddingVertical: 12 }}
         />

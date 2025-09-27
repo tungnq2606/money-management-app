@@ -4,6 +4,7 @@ import TransactionItem from "@/components/TransactionItem";
 import { formatMoney } from "@/constants/formatMoney";
 import { getGlobalCategoryService } from "@/database/services";
 import { useAuthStore } from "@/stores/authStore";
+import { useBudgetStore } from "@/stores/budgetStore";
 import { useTransactionStore } from "@/stores/transactionStore";
 import { useWalletStore } from "@/stores/walletStore";
 import AntDesign from "@expo/vector-icons/AntDesign";
@@ -24,6 +25,7 @@ const HomeScreen = () => {
   const { user } = useAuthStore();
   const { wallets, loadWallets, totalAmount } = useWalletStore();
   const { transactions, loadTransactionsWithFilters } = useTransactionStore();
+  const { budgets, loadBudgetsByUserIdWithSpending } = useBudgetStore();
 
   const [selectedMonth, setSelectedMonth] = useState<number>(
     new Date().getMonth()
@@ -93,7 +95,8 @@ const HomeScreen = () => {
   useEffect(() => {
     if (!user) return;
     loadWallets(user._id.toString());
-  }, [user, loadWallets]);
+    loadBudgetsByUserIdWithSpending(user._id.toString());
+  }, [user, loadWallets, loadBudgetsByUserIdWithSpending]);
 
   useEffect(() => {
     if (!user || wallets.length === 0) return;
@@ -164,6 +167,32 @@ const HomeScreen = () => {
     });
   }, [transactions]);
 
+  // Budget summary
+  const budgetSummary = useMemo(() => {
+    if (budgets.length === 0) return null;
+
+    const totalBudget = budgets.reduce((sum, budget) => sum + budget.amount, 0);
+    const totalSpent = budgets.reduce((sum, budget) => {
+      const spent = Math.max(0, budget.amount - budget.remain);
+      return sum + spent;
+    }, 0);
+    const totalRemaining = budgets.reduce(
+      (sum, budget) => sum + budget.remain,
+      0
+    );
+    const exceededBudgets = budgets.filter(
+      (budget) => budget.remain <= 0
+    ).length;
+
+    return {
+      totalBudget,
+      totalSpent,
+      totalRemaining,
+      exceededBudgets,
+      budgetCount: budgets.length,
+    };
+  }, [budgets]);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
@@ -217,6 +246,47 @@ const HomeScreen = () => {
             </View>
           </View>
         </View>
+
+        {/* Budget Summary */}
+        {budgetSummary && (
+          <View style={styles.budgetSummary}>
+            <View style={styles.budgetSummaryHeader}>
+              <Text style={styles.budgetSummaryTitle}>Budget Overview</Text>
+              <TouchableOpacity onPress={() => router.push("/(tabs)/budget")}>
+                <Text style={styles.viewAllText}>View All</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.budgetStats}>
+              <View style={styles.budgetStatItem}>
+                <Text style={styles.budgetStatLabel}>Total Budget</Text>
+                <Text style={styles.budgetStatValue}>
+                  {formatMoney(budgetSummary.totalBudget)}
+                </Text>
+              </View>
+              <View style={styles.budgetStatItem}>
+                <Text style={styles.budgetStatLabel}>Spent</Text>
+                <Text style={[styles.budgetStatValue, { color: "#FF4D4F" }]}>
+                  {formatMoney(budgetSummary.totalSpent)}
+                </Text>
+              </View>
+              <View style={styles.budgetStatItem}>
+                <Text style={styles.budgetStatLabel}>Remaining</Text>
+                <Text style={[styles.budgetStatValue, { color: "#22C55E" }]}>
+                  {formatMoney(budgetSummary.totalRemaining)}
+                </Text>
+              </View>
+            </View>
+            {budgetSummary.exceededBudgets > 0 && (
+              <View style={styles.budgetWarning}>
+                <AntDesign name="warning" size={16} color="#FF4D4F" />
+                <Text style={styles.budgetWarningText}>
+                  {budgetSummary.exceededBudgets} budget(s) exceeded
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
+
         <SpendFrequencyChart
           key={`chart-${selectedPeriod}-${transactions.length}`}
           data={chartData}
@@ -336,6 +406,60 @@ const styles = StyleSheet.create({
   accountIcon: {
     width: 24,
     height: 24,
+  },
+  budgetSummary: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 16,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 1,
+  },
+  budgetSummaryHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  budgetSummaryTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#000",
+  },
+  budgetStats: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  budgetStatItem: {
+    flex: 1,
+    alignItems: "center",
+  },
+  budgetStatLabel: {
+    fontSize: 12,
+    color: "#91919F",
+    marginBottom: 4,
+  },
+  budgetStatValue: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#000",
+  },
+  budgetWarning: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 12,
+    padding: 8,
+    backgroundColor: "#FFF2F2",
+    borderRadius: 8,
+  },
+  budgetWarningText: {
+    fontSize: 12,
+    color: "#FF4D4F",
+    marginLeft: 8,
   },
   accountBoxContent: {
     marginLeft: 8,

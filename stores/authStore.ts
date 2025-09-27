@@ -30,20 +30,15 @@ type AuthStore = AuthState & AuthActions;
 export const useAuthStore = create<AuthStore>()(
   persist(
     (set, get) => ({
-      // Initial state
       user: null,
       isAuthenticated: false,
       isLoading: false,
       error: null,
-
-      // Actions
       signIn: async (email: string, password: string): Promise<boolean> => {
         set({ isLoading: true, error: null });
-
         try {
           const signInData: SignInData = { email, password };
           const user = await getGlobalUserService().signIn(signInData);
-
           if (user) {
             set({
               user,
@@ -71,9 +66,7 @@ export const useAuthStore = create<AuthStore>()(
 
       signUp: async (userData: CreateUserData): Promise<boolean> => {
         set({ isLoading: true, error: null });
-
         try {
-          // Check if user already exists
           const existingUser = getGlobalUserService().getUserByEmail(
             userData.email
           );
@@ -84,20 +77,13 @@ export const useAuthStore = create<AuthStore>()(
             });
             return false;
           }
-
-          // Create new user
           const user = await getGlobalUserService().createUser(userData);
-
-          // Create default categories for the new user
           getGlobalCategoryService().createDefaultCategories(
             user._id.toString()
           );
-
-          // Create a default wallet for the new user
           const currentDate = new Date();
           const nextYear = new Date();
           nextYear.setFullYear(currentDate.getFullYear() + 1);
-
           const defaultWallet = getGlobalWalletService().createWallet({
             userId: user._id.toString(),
             name: "My Wallet",
@@ -106,12 +92,9 @@ export const useAuthStore = create<AuthStore>()(
             fromDate: currentDate,
             toDate: nextYear,
           });
-
-          // Create sample transactions for the new user
           getGlobalTransactionService().createSampleTransactions(
             defaultWallet._id.toString()
           );
-
           set({
             user,
             isAuthenticated: true,
